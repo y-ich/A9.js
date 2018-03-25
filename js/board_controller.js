@@ -68,6 +68,7 @@ class BoardController {
     }
 
     pass() {
+        this.jrecord.createNode(false);
         this.passNum += 1;
         this.turn = this.turn === JGO.BLACK ? JGO.WHITE : JGO.BLACK;
         if (this.passNum < 2) {
