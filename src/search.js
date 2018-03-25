@@ -148,7 +148,7 @@ export class Tree {
     hasNext(nodeId, brId, moveCnt) {
         const nd = this.node[nodeId];
         const nextId = nd.nextId[brId];
-        return nextId != null && nd.nextHash[brId] === this.node[nodeId].hash &&
+        return nextId >= 0 && nd.nextHash[brId] === this.node[nextId].hash &&
             this.node[nextId].moveCnt === moveCnt;
     }
 
@@ -171,7 +171,7 @@ export class Tree {
                 break;
             }
             nextMove = nd.move[best];
-            seqStr += '->' + ('  ' + ev2str(ev2str(nextMove))).slice(-3);
+            seqStr += '->' + ('  ' + ev2str(nextMove)).slice(-3);
 
             if (!this.hasNext(nodeId, best, nd.moveCnt + 1)) {
                 break;
