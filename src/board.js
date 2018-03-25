@@ -2,7 +2,7 @@ import { shuffle, mostCommon, hash } from './utils.js';
 import { BSIZE, EBSIZE, BVCNT, EBVCNT, VNULL, KEEP_PREV_CNT, PASS, KOMI, FEATURE_CNT } from './constants.js';
 import { EMPTY, BLACK, WHITE, EXTERIOR, opponentOf } from './intersection.js';
 import { StoneGroup } from './stone_group.js';
-import { X_LABELS, xy2ev, rv2ev, ev2rv } from './coord_convert.js';
+import { X_LABELS, xy2ev, rv2ev, ev2rv, ev2str, str2ev } from './coord_convert.js';
 
 export function neighbors(v) {
     return [v + 1, v + EBSIZE, v - 1, v - EBSIZE];
@@ -28,6 +28,7 @@ export class Candidates {
 export class Board {
     constructor() {
         this.state = new Uint8Array(EBVCNT);
+        this.state.fill(EXTERIOR);
         this.id = new Uint8Array(EBVCNT);
         this.next = new Uint8Array(EBVCNT);
         this.sg = [];
@@ -57,7 +58,6 @@ export class Board {
     }
 
     clear() {
-        this.state.fill(EXTERIOR);
         for (let x = 1; x <= BSIZE; x++) {
             for (let y = 1; y <= BSIZE; y++) {
                 this.state[xy2ev(x, y)] = EMPTY;
@@ -230,7 +230,7 @@ export class Board {
         if (notFillEye && this.eyeshape(v, this.turn)) {
             return false;
         }
-        for (let i = KEEP_PREV_CNT - 1; i >= 0; i--) {
+        for (let i = KEEP_PREV_CNT - 2; i >= 0; i--) {
             this.prevState[i + 1] = this.prevState[i];
         }
         this.prevState[0] = new Uint8Array(this.state);
@@ -240,7 +240,7 @@ export class Board {
             this.placeStone(v);
             const id = this.id[v];
             this.ko = VNULL;
-            if (this.removeCnt === 1 && this.sg[id].getLibCnt() === 1 && this.sg[id].getSize === 1) {
+            if (this.removeCnt === 1 && this.sg[id].getLibCnt() === 1 && this.sg[id].getSize() === 1) {
                 this.ko = this.sg[id].getVAtr();
             }
         }
@@ -340,9 +340,9 @@ export class Board {
         console.log('');
     }
 
-    getFeatures() {
+    feature() {
         function index(p, f) {
-            return f * FEATURE_CNT + p;
+            return p * FEATURE_CNT + f;
         }
         const array = new Float32Array(BVCNT * FEATURE_CNT);
 
@@ -396,3 +396,11 @@ export class Board {
         return mostCommon(doubleScoreList) / 2;
     }
 }
+/*
+function testBoard() {
+    const b = new Board();
+    b.playSequence(['A1', 'A2', 'A9', 'B1'].map(str2ev));
+    b.showboard();
+}
+testBoard();
+*/
