@@ -1,0 +1,18 @@
+{
+  "name": "a9",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/*.js -o js/a9.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-import-export": "^1.0.2",
+    "babelify": "^8.0.0",
+    "browserify": "^16.1.1"
+  }
+}
