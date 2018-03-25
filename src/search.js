@@ -1,5 +1,5 @@
 import { argsort, argmax } from './utils.js';
-import { BVCNT, PASS, VNULL } from './constants.js';
+import { BSIZE, BVCNT, PASS, VNULL } from './constants.js';
 import { rv2ev, ev2str } from './coord_convert.js';
 import { Board } from './board.js';
 
@@ -7,6 +7,17 @@ const MAX_NODE_CNT = 16384;
 const EXPAND_CNT = 8;
 
 let TREE_CP = 2.0;
+
+function printProb(prob) {
+    for (let y = 0; y < BSIZE; y++) {
+        let str = '';
+        for (let x = 0; x < BSIZE; x++) {
+            str += ('  ' + prob[x + y * BSIZE].toFixed(1)).slice(-5);
+        }
+        console.log(str);
+    }
+    console.log('pass=%s', prob[prob.length - 1].toFixed(1));
+}
 
 export class Tree {
     constructor(nn) {
@@ -210,7 +221,7 @@ export class Tree {
         const nd = this.node[nodeId];
         nd.value[child] = value;
         nd.evaluated[child] = true;
-        if (this.ndoeCnt > 0.85 * MAX_NODE_CNT) {
+        if (this.nodeCnt > 0.85 * MAX_NODE_CNT) {
             this.deleteNode();
         }
         const nextId = this.createNode(b, prob);
@@ -290,7 +301,11 @@ export class Tree {
         });
 
         if (!ponder) {
-            console.log('\nmove count=%d: evaluated=%d', this.rootMoveCnt + 1, this.evalCnt);
+            console.log(
+                '\nmove count=%d: left time=%s[sec] evaluated=%d',
+                this.rootMoveCnt + 1,
+                Math.max(this.leftTime - time, 0.0).toFixed(1),
+                this.evalCnt);
             this.printInfo(this.rootId);
             this.leftTime = this.leftTime - (Date.now() - start) / 1000;
         }
@@ -313,7 +328,7 @@ class Node {
         this.totalValue = 0.0;
         this.totalCnt = 0;
         this.hash = 0;
-        this.moveCnt = 0;
+        this.moveCnt = -1;
         this.initBranch();
         this.clear();
     }
