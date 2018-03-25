@@ -152,21 +152,17 @@ export class Tree {
         for (let i = 0; i < 7; i++) {
             const nd = this.node[nodeId];
             if (nextMove === PASS || nd.branchCnt < 1) {
-                console.log('pass1');
                 break;
             }
 
             const best = argmax(nd.visitCnt.slice(0, nd.branchCnt));
-            console.log(nd.visitCnt, best);
             if (nd.visitCnt[best] === 0) {
-                console.log('pass2');
                 break;
             }
             nextMove = nd.move[best];
             seqStr += '->' + ('  ' + ev2str(ev2str(nextMove))).slice(-3);
 
             if (!this.hasNext(nodeId, best, nd.moveCnt + 1)) {
-                console.log('pass3');
                 break;
             }
             nodeId = nd.nextId[best];
@@ -229,12 +225,12 @@ export class Tree {
         const [best, nextId, nextMove, isHeadNode] = this.bestByActionValue(b, nodeId);
         route.push([nodeId, best]);
         b.play(nextMove, false);
+        const nd = this.node[nodeId];
         const value = isHeadNode ?
-            (this.node[nodeId].evaluated[best] ?
-                this.node[nodeId].value[best] :
+            (nd.evaluated[best] ?
+                nd.value[best] :
                 await this.evaluateChildNode(b, nodeId, best)) :
             - await this.searchBranch(b, nextId, route);
-        const nd = this.node[nodeId];
         nd.totalValue += value;
         nd.totalCnt += 1;
         nd.valueWin[best] += value;
