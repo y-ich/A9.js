@@ -143,6 +143,9 @@ export class Board {
                 break;
             }
         }
+        const tmp = this.next[v1];
+        this.next[v1] = this.next[v2];
+        this.next[v2] = tmp;
     }
 
     placeStone(v) {
