@@ -32,7 +32,7 @@ export class StoneGroup {
             return;
         }
         this.libs.add(v);
-        this.lib_cnt += 1;
+        this.libCnt += 1;
         this.vAtr = v;
     }
 
