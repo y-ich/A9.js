@@ -1,5 +1,6 @@
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
+import { BSIZE } from './constants.js';
 import { Board } from './board.js';
 import { Tree } from './search.js';
 
@@ -45,56 +46,25 @@ class PlayController {
 
     async update(coord) {
         if (coord) {
-            this.engine.play(ev2str(xy2ev(coord.i + 1, coord.j + 1)));
+            this.engine.play(ev2str(xy2ev(coord.i + 1, BSIZE - coord.j)));
         }
         if (this.board.turn !== this.board.ownColor) {
-            const move = await this.engine.genmove();
-            switch (move) {
-                case 'resign':
-                break;
-                case 'pass':
-                this.board.pass();
-                break;
-                default: {
-                    const xy = ev2xy(str2ev(move));
-                    this.board.play(new JGO.Coordinate(xy[0] - 1, xy[1] - 1), true);
-                }
-            }
-        }
-    }
-
-    selectMove(distribution, feature) {
-        if (feature.noSensible) {
-            return null;
-        }
-        let xy;
-        let probability;
-        do {
-            const random = Math.random();
-            let accu = 0.0;
-            let i;
-            for (i = 0; i < distribution.length; i++) {
-                accu += distribution[i];
-                if (accu > random) {
-                    probability = distribution[i];
+            setTimeout(async () => {
+                const move = await this.engine.genmove();
+                switch (move) {
+                    case 'resign':
+                    alert('負ました');
                     break;
+                    case 'pass':
+                    this.board.pass();
+                    break;
+                    default: {
+                        const xy = ev2xy(str2ev(move));
+                        this.board.play(new JGO.Coordinate(xy[0] - 1, BSIZE - xy[1]), true);
+                    }
                 }
-            }
-            if (i >= distribution.length) {
-                continue;
-            }
-            const yx = this.model.pointToXy(i);
-            // distributionのアラインメントが転置している(tf仕様)ので下でx,yを逆にする。
-            xy = [yx[1], yx[0]];
-        } while (!feature.getFeature(46, xy[0], xy[1])); // sensibleness
-
-        console.log(probability);
-        /*
-        console.log(feature.planeToString(0));
-        console.log(feature.planeToString(1));
-        console.log(feature.planeToString(46));
-        */
-        return xy;
+            }, 0);
+        }
     }
 }
 
@@ -116,8 +86,8 @@ const conditionPromise = new Promise(function(res, rej) {
 Promise.all([nn.load(), conditionPromise]).then(async function(data) {
     const color = data[1].color === 'B' ? JGO.BLACK : JGO.WHITE;
     const handicap = parseInt(data[1].handicap);
-    const board = new BoardController(9, color, handicap);
+    const board = new BoardController(BSIZE, color, handicap);
     const controller = new PlayController(engine, board);
     board.addObserver(controller);
-    engine.timeSettings(0, 3);
+    engine.timeSettings(0, 1);
 });
