@@ -71,11 +71,7 @@ class BoardController {
         this.jrecord.createNode(false);
         this.passNum += 1;
         this.turn = this.turn === JGO.BLACK ? JGO.WHITE : JGO.BLACK;
-        if (this.passNum < 2) {
-            this.update();
-        } else {
-            // end
-        }
+        this.update(this.passNum < 2 ? 'pass' : 'end');
     }
 
     play(coord, sound = false) {

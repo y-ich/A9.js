@@ -395,9 +395,9 @@ export class Board {
         for (let i = 0; i < ROLL_OUT_NUM; i++) {
             this.copyTo(bCpy);
             bCpy.rollout(false);
-            doubleScoreList.push(bCpy.score() * 2);
+            doubleScoreList.push(bCpy.score());
         }
-        return mostCommon(doubleScoreList) / 2;
+        return mostCommon(doubleScoreList);
     }
 }
 /*

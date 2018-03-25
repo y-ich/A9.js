@@ -27,6 +27,7 @@ class A9Engine {
             return 'resign';
         } else if (move === PASS || this.b.state[move] === EMPTY) {
             this.b.play(move, true);
+            this.b.showboard();
             return ev2str(move);
         } else {
             console.log('error');
@@ -52,7 +53,11 @@ class PlayController {
     }
 
     async update(coord) {
-        if (coord) {
+        if (coord === 'end') {
+            alert(this.engine.b.finalScore());
+            return;
+        }
+        if (typeof coord === 'object') {
             this.engine.play(ev2str(xy2ev(coord.i + 1, BSIZE - coord.j)));
         }
         if (this.board.turn !== this.board.ownColor) {
