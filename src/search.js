@@ -157,7 +157,7 @@ export class Tree {
     }
 
     bestSequence(nodeId, headMove) {
-        let seqStr = ('  ' + ev2str(headMove)).slice(-3);
+        let seqStr = ('   ' + ev2str(headMove)).slice(-5);
         let nextMove = headMove;
 
         for (let i = 0; i < 7; i++) {
@@ -171,7 +171,7 @@ export class Tree {
                 break;
             }
             nextMove = nd.move[best];
-            seqStr += '->' + ('  ' + ev2str(nextMove)).slice(-3);
+            seqStr += '->' + ('   ' + ev2str(nextMove)).slice(-5);
 
             if (!this.hasNext(nodeId, best, nd.moveCnt + 1)) {
                 break;

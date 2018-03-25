@@ -1,7 +1,8 @@
 /* global $ JGO BoardController */
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
-import { BSIZE } from './constants.js';
+import { BSIZE, PASS } from './constants.js';
+import { EMPTY } from './intersection.js';
 import { Board } from './board.js';
 import { Tree } from './search.js';
 
@@ -24,9 +25,14 @@ class A9Engine {
         const [move, winRate] = await this.bestMove();
         if (winRate < 0.1) {
             return 'resign';
-        } else {
+        } else if (move === PASS || this.b.state[move] === EMPTY) {
             this.b.play(move, true);
             return ev2str(move);
+        } else {
+            console.log('error');
+            console.log('%d(%s) is not empty', move, ev2str(move));
+            this.b.showboard();
+            console.log(this.b.candidates());
         }
     }
 
@@ -52,6 +58,7 @@ class PlayController {
         if (this.board.turn !== this.board.ownColor) {
             setTimeout(async () => {
                 const move = await this.engine.genmove();
+                console.log(move);
                 switch (move) {
                     case 'resign':
                     alert('負ました');
@@ -60,7 +67,8 @@ class PlayController {
                     this.board.pass();
                     break;
                     default: {
-                        const xy = ev2xy(str2ev(move));
+                        const ev = str2ev(move);
+                        const xy = ev2xy(ev);
                         this.board.play(new JGO.Coordinate(xy[0] - 1, BSIZE - xy[1]), true);
                     }
                 }
@@ -71,7 +79,7 @@ class PlayController {
 
 const nn = new NeuralNetwork();
 const engine = new A9Engine(nn);
-engine.timeSettings(0, 10);
+engine.timeSettings(0, 1);
 
 const conditionPromise = new Promise(function(res, rej) {
     const $startModal = $('#start-modal');

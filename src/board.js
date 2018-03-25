@@ -186,6 +186,7 @@ export class Board {
                 case EMPTY:
                 return true;
                 case BLACK:
+                case WHITE:
                 stoneCnt[c] += 1;
                 if (this.sg[this.id[nv]].getLibCnt() === 1) {
                     atrCnt[c] += 1;
