@@ -75,6 +75,11 @@ class PlayController {
             }, 0);
         }
     }
+
+    pass() {
+        this.engine.play('pass');
+        this.board.pass();
+    }
 }
 
 const nn = new NeuralNetwork();
@@ -99,5 +104,12 @@ Promise.all([nn.load(), conditionPromise]).then(async function(data) {
     const board = new BoardController(BSIZE, color, handicap, function() {
         const controller = new PlayController(engine, board);
         board.addObserver(controller);
+        $('#pass').on('click', function(event) {
+            // TODO 自分の番だけにする
+            controller.pass();
+        });
+        $('#resign').on('click', function(event) {
+            location.reload();
+        });
     });
 });
