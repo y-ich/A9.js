@@ -1,3 +1,4 @@
+/* global $ JGO BoardController */
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE } from './constants.js';
@@ -70,6 +71,7 @@ class PlayController {
 
 const nn = new NeuralNetwork();
 const engine = new A9Engine(nn);
+engine.timeSettings(0, 10);
 
 const conditionPromise = new Promise(function(res, rej) {
     const $startModal = $('#start-modal');
@@ -86,8 +88,8 @@ const conditionPromise = new Promise(function(res, rej) {
 Promise.all([nn.load(), conditionPromise]).then(async function(data) {
     const color = data[1].color === 'B' ? JGO.BLACK : JGO.WHITE;
     const handicap = parseInt(data[1].handicap);
-    const board = new BoardController(BSIZE, color, handicap);
-    const controller = new PlayController(engine, board);
-    board.addObserver(controller);
-    engine.timeSettings(0, 1);
+    const board = new BoardController(BSIZE, color, handicap, function() {
+        const controller = new PlayController(engine, board);
+        board.addObserver(controller);
+    });
 });

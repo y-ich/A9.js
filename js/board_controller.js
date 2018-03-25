@@ -6,7 +6,7 @@ const stoneSound = new WAudio('audio/go-piece1.mp3');
 
 /* jGoBoardのためのコントローラ */
 class BoardController {
-    constructor(boardSize, color, handicap) {
+    constructor(boardSize, color, handicap, callback) {
         this.ownColor = color; // ownColorはGUIを使用する側
         this.turn = JGO.BLACK;
         this.jrecord = null;
@@ -41,7 +41,7 @@ class BoardController {
             canvas.addListener('mousemove', this.moveHandler.bind(this));
             canvas.addListener('mouseout', this.leaveHandler.bind(this));
             canvas.addListener('mousedown', this.downHandler.bind(this));
-            return;
+            callback(canvas);
         });
     }
 
