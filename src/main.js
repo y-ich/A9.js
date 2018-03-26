@@ -66,7 +66,7 @@ class PlayController {
                 console.log(move);
                 switch (move) {
                     case 'resign':
-                    alert('負ました');
+                    alert('負けました');
                     break;
                     case 'pass':
                     this.board.pass();
@@ -89,7 +89,7 @@ class PlayController {
 
 const nn = new NeuralNetwork();
 const engine = new A9Engine(nn);
-engine.timeSettings(0, 1);
+engine.timeSettings(0, 10);
 
 const conditionPromise = new Promise(function(res, rej) {
     const $startModal = $('#start-modal');
@@ -97,16 +97,14 @@ const conditionPromise = new Promise(function(res, rej) {
     $startModal.on('hidden.bs.modal', function(e) {
         const $conditionForm = $('#condition-form');
         res({
-            color: $conditionForm[0].color.value,
-            handicap: $conditionForm[0].handicap.value
+            color: $conditionForm[0].color.value
         });
     });
 });
 
 Promise.all([nn.load(), conditionPromise]).then(async function(data) {
     const color = data[1].color === 'B' ? JGO.BLACK : JGO.WHITE;
-    const handicap = parseInt(data[1].handicap);
-    const board = new BoardController(BSIZE, color, handicap, function() {
+    const board = new BoardController(BSIZE, color, 0, function() {
         const controller = new PlayController(engine, board);
         board.addObserver(controller);
         $('#pass').on('click', function(event) {
