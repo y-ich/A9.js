@@ -2,7 +2,7 @@ import { shuffle, mostCommon, hash } from './utils.js';
 import { BSIZE, EBSIZE, BVCNT, EBVCNT, VNULL, KEEP_PREV_CNT, PASS, KOMI, FEATURE_CNT } from './constants.js';
 import { EMPTY, BLACK, WHITE, EXTERIOR, opponentOf } from './intersection.js';
 import { StoneGroup } from './stone_group.js';
-import { X_LABELS, xy2ev, rv2ev, ev2rv, ev2str, str2ev } from './coord_convert.js';
+import { X_LABELS, xy2ev, rv2ev, ev2rv } from './coord_convert.js';
 
 export function neighbors(v) {
     return [v + 1, v + EBSIZE, v - 1, v - EBSIZE];
@@ -360,10 +360,10 @@ export class Board {
         }
         for (let i = 0; i < KEEP_PREV_CNT; i++) {
             for (let p = 0; p < BVCNT; p++) {
-                array[index(p, (i + 1) * 2)] = this.state[rv2ev(p)] === my ? 1.0 : 0.0;
+                array[index(p, (i + 1) * 2)] = this.prevState[i][rv2ev(p)] === my ? 1.0 : 0.0;
             }
             for (let p = 0; p < BVCNT; p++) {
-                array[index(p, (i + 1) * 2 + 1)] = this.state[rv2ev(p)] === opp ? 1.0 : 0.0;
+                array[index(p, (i + 1) * 2 + 1)] = this.prevState[i][rv2ev(p)] === opp ? 1.0 : 0.0;
             }
         }
         for (let p = 0; p < BVCNT; p++) {

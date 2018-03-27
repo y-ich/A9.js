@@ -1,6 +1,6 @@
-/* global $ JGO BoardController */
+/* global $ JGO BoardController jssgf */
 import { NeuralNetwork } from './neural_network.js';
-import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
+import { ev2str, str2ev, xy2ev, ev2xy, move2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';
 import { EMPTY } from './intersection.js';
 import { Board } from './board.js';
@@ -27,7 +27,6 @@ class A9Engine {
             return 'resign';
         } else if (move === PASS || this.b.state[move] === EMPTY) {
             this.b.play(move, true);
-            this.b.showboard();
             return ev2str(move);
         } else {
             console.log('error');
@@ -37,8 +36,8 @@ class A9Engine {
         }
     }
 
-    play(coord) {
-        this.b.play(str2ev(coord), false);
+    play(ev) {
+        this.b.play(ev, false);
     }
 
     async bestMove() {
@@ -47,29 +46,34 @@ class A9Engine {
 }
 
 class PlayController {
-    constructor(engine, board) {
+    constructor(engine, board, self) {
         this.engine = engine;
         this.board = board;
+        this.self = self;
     }
 
     async update(coord) {
         if (coord === 'end') {
+            await this.endEval();
+            $('#sgf').val(this.board.jrecord.toSgf());
             alert(this.engine.b.finalScore());
             return;
         }
-        if (typeof coord === 'object') {
-            this.engine.play(ev2str(xy2ev(coord.i + 1, BSIZE - coord.j)));
+        if (!this.self && typeof coord === 'object') {
+            this.engine.play(xy2ev(coord.i + 1, BSIZE - coord.j));
         }
-        if (this.board.turn !== this.board.ownColor) {
+        if (this.self || this.board.turn !== this.board.ownColor) {
             setTimeout(async () => {
                 const move = await this.engine.genmove();
                 console.log(move);
                 switch (move) {
                     case 'resign':
+                    await this.endEval();
+                    $('#sgf').val(this.board.jrecord.toSgf());
                     alert('負けました');
                     break;
                     case 'pass':
-                    this.board.pass();
+                    this.board.play(null);
                     break;
                     default: {
                         const ev = str2ev(move);
@@ -82,14 +86,22 @@ class PlayController {
     }
 
     pass() {
-        this.engine.play('pass');
-        this.board.pass();
+        this.engine.play(PASS);
+        this.board.play(null);
+    }
+
+    async endEval() {
+        console.log(this.engine.b.turn, (await nn.evaluate(this.engine.b))[1]);
+        /*
+        this.engine.b.turn = opponentOf(this.engine.b.turn);
+        console.log(this.engine.b.turn, (await nn.evaluate(this.engine.b))[1]);
+        */
     }
 }
 
 const nn = new NeuralNetwork();
 const engine = new A9Engine(nn);
-engine.timeSettings(0, 10);
+engine.timeSettings(0, 2);
 
 const conditionPromise = new Promise(function(res, rej) {
     const $startModal = $('#start-modal');
@@ -103,9 +115,10 @@ const conditionPromise = new Promise(function(res, rej) {
 });
 
 Promise.all([nn.load(), conditionPromise]).then(async function(data) {
-    const color = data[1].color === 'B' ? JGO.BLACK : JGO.WHITE;
+    const color = data[1].color === 'W' ? JGO.WHITE : JGO.BLACK;
+    const self = data[1].color === 'self';
     const board = new BoardController(BSIZE, color, 0, function() {
-        const controller = new PlayController(engine, board);
+        const controller = new PlayController(engine, board, self);
         board.addObserver(controller);
         $('#pass').on('click', function(event) {
             // TODO 自分の番だけにする
@@ -116,3 +129,19 @@ Promise.all([nn.load(), conditionPromise]).then(async function(data) {
         });
     });
 });
+
+
+$('#sgf').on('change', async function(e) {
+    const sgf = $(e.currentTarget).val();
+    let [node] = jssgf.fastParse(sgf);
+    const b = new Board();
+    while (node._children.length !== 0) {
+        node = node._children[0];
+        const move = node.B || node.W;
+        if (move != null) {
+            b.play(xy2ev.apply(null, move2xy(move)), false);
+        }
+    }
+    b.showboard();
+    console.log((await nn.evaluate(b)));
+})

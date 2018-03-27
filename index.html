@@ -6,11 +6,12 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="js/jgoboard-latest.js"></script>
-    <script type="text/javascript" src="large/board.js"></script>
+    <script src="js/jgoboard-latest.js"></script>
+    <script src="large/board.js"></script>
+    <script src="js/jgo-extension.js"></script>
     <script src="js/webdnn.js"></script>
     <script src="js/waudio.js"></script>
-    <script src="js/go_state.js"></script>
+    <script src="js/jssgf.js"></script>
     <script src="js/board_controller.js"></script>
     <!--script src="js/debug.js"></script-->
     <style type="text/css">
@@ -51,6 +52,9 @@
         <button id="resign" type="button" class="btn btn-danger">Resign</button>
         <button id="pass" type="button" class="btn btn-default">Pass</button>
     </div>
+    <div class="text-center">
+        <textarea name="sgf" id="sgf" cols="30" rows="10"></textarea>
+    </div>
     <div class="modal fade" id="start-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -70,7 +74,10 @@
                             <label for="color" class="col-sm-3 control-label">Your Color</label>
                             <div class="col-ms-9">
                                 <label class="radio-inline">
-                                    <input type="radio" name="color" value="B" checked>Black
+                                    <input type="radio" name="color" value="self" checked>Self
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" name="color" value="B">Black
                                 </label>
                                 <label class="radio-inline">
                                     <input type="radio" name="color" value="W">White
@@ -92,6 +99,6 @@
             </div>
         </div>
     </div>
-    <script src="./js/a9.js"></script>
+    <script src="./js/a9.js?dummy=3"></script>
 </body>
 </html>

@@ -18,6 +18,7 @@ class BoardController {
         this.passNum = 0;
 
         this.jrecord = new JGO.Record(boardSize);
+        this.jrecord.createNode(false); // root node
         this.jboard = this.jrecord.getBoard();
         if (handicap >= 2) {
             const stones = JGO.util.getHandicapCoordinates(this.jboard.width,
@@ -67,44 +68,43 @@ class BoardController {
         }, 10); // 0ではjGoBoardのレンダリングが終わっていない。
     }
 
-    pass() {
-        this.jrecord.createNode(false);
-        this.passNum += 1;
-        this.turn = this.turn === JGO.BLACK ? JGO.WHITE : JGO.BLACK;
-        this.update(this.passNum < 2 ? 'pass' : 'end');
-    }
-
     play(coord, sound = false) {
         const play = this.jboard.playMove(coord, this.turn, this.ko);
         if (!play.success) {
             console.log(coord, play);
             return play.success;
         }
-
         const node = this.jrecord.createNode(false);
         // tally captures
         node.info.captures[this.turn] += play.captures.length;
-        // play stone
-        node.setType(coord, this.turn);
-        // clear opponent's stones
-        node.setType(play.captures, JGO.CLEAR);
+        if (coord) {
+            // play stone
+            node.setType(coord, this.turn);
+            node.setMark(coord, JGO.MARK.CIRCLE); // mark move
+            // clear opponent's stones
+            node.setType(play.captures, JGO.CLEAR);
+        }
         if(this.lastMove) {
             node.setMark(this.lastMove, JGO.MARK.NONE); // clear previous mark
         }
         if(this.ko) {
             node.setMark(this.ko, JGO.MARK.NONE); // clear previous ko mark
         }
-        node.setMark(coord, JGO.MARK.CIRCLE); // mark move
         this.lastMove = coord;
         if(play.ko) {
             node.setMark(play.ko, JGO.MARK.CIRCLE); // mark ko, too
         }
         this.ko = play.ko;
         this.turn = this.turn === JGO.BLACK ? JGO.WHITE : JGO.BLACK;
-        this.passNum = 0;
-        this.update(coord);
-        if (sound) {
-            stoneSound.play();
+        if (coord == null) {
+            this.passNum += 1;
+            this.update(this.passNum < 2 ? 'pass' : 'end');
+        } else {
+            this.passNum = 0;
+            this.update(coord);
+            if (sound) {
+                stoneSound.play();
+            }
         }
         return play.success;
     }

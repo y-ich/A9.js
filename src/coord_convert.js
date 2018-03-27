@@ -2,6 +2,11 @@ import { BSIZE, EBSIZE, BVCNT, PASS } from './constants.js';
 
 export const X_LABELS = '@ABCDEFGHJKLMNOPQRST';
 
+export function move2xy(s) {
+    const OFFSET = 'a'.charCodeAt(0) - 1;
+    return [s.charCodeAt(0) - OFFSET, BSIZE + 1 - (s.charCodeAt(1) - OFFSET)];
+}
+
 export function ev2xy(ev) {
     return [ev % EBSIZE, Math.floor(ev / EBSIZE)];
 }
