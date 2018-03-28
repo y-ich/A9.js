@@ -6,8 +6,9 @@ const stoneSound = new WAudio('audio/go-piece1.mp3');
 
 /* jGoBoardのためのコントローラ */
 class BoardController {
-    constructor(boardSize, color, handicap, callback) {
-        this.ownColor = color; // ownColorはGUIを使用する側
+    constructor(boardSize, handicap, callback) {
+        this.id = 'board';
+        this.ownColor = null; // ownColorはGUIを使用する側
         this.turn = JGO.BLACK;
         this.jrecord = null;
         this.jboard = null;
@@ -37,13 +38,25 @@ class BoardController {
             right: false
         }});
 
-        jsetup.create('board', canvas => {
+        jsetup.create(this.id, canvas => {
             canvas.addListener('click', this.clickHander.bind(this));
             canvas.addListener('mousemove', this.moveHandler.bind(this));
             canvas.addListener('mouseout', this.leaveHandler.bind(this));
             canvas.addListener('mousedown', this.downHandler.bind(this));
-            callback(canvas);
+            callback(this);
         });
+    }
+
+    destroy() {
+        this.removeObservers();
+        const dom = document.getElementById(this.id);
+        while (dom.firstChild) {
+            dom.removeChild(dom.firstChild);
+        }
+    }
+
+    setOwnColor(color) {
+        this.ownColor = color;
     }
 
     addObserver(observer) {
@@ -55,12 +68,16 @@ class BoardController {
         observer.update();
     }
 
+    removeObservers() {
+        this.observers = [];
+    }
+
     update(coord) {
         const node = this.jrecord.getCurrentNode();
-        document.getElementById('black-captures').innerText =
-            node.info.captures[JGO.BLACK];
-        document.getElementById('white-captures').innerText =
-            node.info.captures[JGO.WHITE];
+        document.getElementById('opponent-captures').innerText =
+            node.info.captures[this.ownColor === JGO.BLACK ? JGO.WHITE : JGO.BLACK];
+        document.getElementById('own-captures').innerText =
+            node.info.captures[this.ownColor];
         setTimeout(() => {
             this.observers.forEach(function(observer) {
                 observer.update(coord);

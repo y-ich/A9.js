@@ -1,6 +1,6 @@
-/* global $ JGO BoardController jssgf */
+/* global $ JGO BoardController */
 import { NeuralNetwork } from './neural_network.js';
-import { ev2str, str2ev, xy2ev, ev2xy, move2xy } from './coord_convert.js';
+import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';
 import { EMPTY } from './intersection.js';
 import { Board } from './board.js';
@@ -12,7 +12,7 @@ class A9Engine {
         this.tree = new Tree(nn);
     }
 
-    clearBoard() {
+    clear() {
         this.b.clear();
         this.tree.clear();
     }
@@ -46,31 +46,38 @@ class A9Engine {
 }
 
 class PlayController {
-    constructor(engine, board, self) {
+    constructor(engine, board) {
         this.engine = engine;
         this.board = board;
-        this.self = self;
+        this.isSelfPlay = false;
     }
 
+    setIsSelfPlay(isSelfPlay) {
+        this.isSelfPlay = isSelfPlay;
+    }
     async update(coord) {
         if (coord === 'end') {
-            await this.endEval();
-            $('#sgf').val(this.board.jrecord.toSgf());
-            alert(this.engine.b.finalScore());
+            const score = this.engine.b.finalScore();
+            const message = score === 0 ?
+                '持碁' : (
+                    score > 0 ?
+                        `黒${score}目勝ち` :
+                        `白${-score}目勝ち`
+                );
+            alert(message + 'ですか？すみません、整地苦手です…');
+            $(document.body).addClass('end');
             return;
         }
-        if (!this.self && typeof coord === 'object') {
+        if (!this.isSelfPlay && typeof coord === 'object') {
             this.engine.play(xy2ev(coord.i + 1, BSIZE - coord.j));
         }
-        if (this.self || this.board.turn !== this.board.ownColor) {
+        if (this.isSelfPlay || this.board.turn !== this.board.ownColor) {
             setTimeout(async () => {
                 const move = await this.engine.genmove();
-                console.log(move);
                 switch (move) {
                     case 'resign':
-                    await this.endEval();
-                    $('#sgf').val(this.board.jrecord.toSgf());
                     alert('負けました');
+                    $(document.body).addClass('end');
                     break;
                     case 'pass':
                     this.board.play(null);
@@ -86,62 +93,72 @@ class PlayController {
     }
 
     pass() {
-        this.engine.play(PASS);
-        this.board.play(null);
+        if (this.board.ownColor === this.board.turn) {
+            this.engine.play(PASS);
+            this.board.play(null);
+        }
     }
+}
 
-    async endEval() {
-        console.log(this.engine.b.turn, (await nn.evaluate(this.engine.b))[1]);
-        /*
-        this.engine.b.turn = opponentOf(this.engine.b.turn);
-        console.log(this.engine.b.turn, (await nn.evaluate(this.engine.b))[1]);
-        */
-    }
+async function main() {
+    const board = await new Promise(function(res, rej) {
+        new BoardController(BSIZE, 0, res);
+    });
+    // JGOのレンダリングを完了させるためにsetTimeoutでイベントループを進める
+    setTimeout(async function() {
+        try {
+            await nn.load();
+        } catch(e) {
+            if (e.message === 'No backend is available') {
+                if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+                    alert('残念ながらお使いのブラウザでは動きません。Safariをお使いですね。「開発」メニューの「実験的な機能」で「WebGPU」を有効にすると動くかもしれません');
+                } else {
+                    alert('残念ながらお使いのブラウザでは動きません');
+                }
+            }
+            return;
+        }
+        const condition = await new Promise(function(res, rej) {
+            const $startModal = $('#start-modal');
+            $startModal.modal('show');
+            $startModal.one('hidden.bs.modal', function(e) {
+                const $conditionForm = $('#condition-form');
+                res({
+                    color: $conditionForm[0]['color'].value,
+                    timeRule: $conditionForm[0]['time'].value,
+                    time: parseInt($conditionForm[0]['ai-byoyomi'].value),
+                 });
+            });
+        });
+        switch (condition.timeRule) {
+            case 'ai-time':
+            engine.timeSettings(0, condition.time);
+            break;
+            case 'igo-quest':
+            engine.timeSettings(3 * 60 + 55, 1); // 9路盤は平均手数が110手らしいので、55のフィッシャー秒を追加
+            break;
+        }
+        board.setOwnColor(condition.color === 'W' ? JGO.WHITE : JGO.BLACK);
+        const controller = new PlayController(engine, board);
+        controller.setIsSelfPlay(condition.color === 'self-play');
+        board.addObserver(controller);
+        $('#pass').on('click', function(event) {
+            controller.pass();
+        });
+        $('#resign').on('click', function(event) {
+            $(document.body).addClass('end');
+        });
+        $('#retry').one('click', async function(event) {
+            $('#pass').off('click');
+            $('#resign').off('click');
+            board.destroy();
+            engine.clear();
+            $(document.body).removeClass('end');
+            setTimeout(main, 0);
+        });
+    }, 0);
 }
 
 const nn = new NeuralNetwork();
 const engine = new A9Engine(nn);
-engine.timeSettings(0, 2);
-
-const conditionPromise = new Promise(function(res, rej) {
-    const $startModal = $('#start-modal');
-    $startModal.modal('show');
-    $startModal.on('hidden.bs.modal', function(e) {
-        const $conditionForm = $('#condition-form');
-        res({
-            color: $conditionForm[0].color.value
-        });
-    });
-});
-
-Promise.all([nn.load(), conditionPromise]).then(async function(data) {
-    const color = data[1].color === 'W' ? JGO.WHITE : JGO.BLACK;
-    const self = data[1].color === 'self';
-    const board = new BoardController(BSIZE, color, 0, function() {
-        const controller = new PlayController(engine, board, self);
-        board.addObserver(controller);
-        $('#pass').on('click', function(event) {
-            // TODO 自分の番だけにする
-            controller.pass();
-        });
-        $('#resign').on('click', function(event) {
-            location.reload();
-        });
-    });
-});
-
-
-$('#sgf').on('change', async function(e) {
-    const sgf = $(e.currentTarget).val();
-    let [node] = jssgf.fastParse(sgf);
-    const b = new Board();
-    while (node._children.length !== 0) {
-        node = node._children[0];
-        const move = node.B || node.W;
-        if (move != null) {
-            b.play(xy2ev.apply(null, move2xy(move)), false);
-        }
-    }
-    b.showboard();
-    console.log((await nn.evaluate(b)));
-})
+main();

@@ -6,6 +6,9 @@ export class NeuralNetwork {
     }
 
     async load() {
+        if (this.nn) {
+            return;
+        }
         this.nn = await WebDNN.load('./output', { backendOrder: ['webgpu', 'webgl'] });
     }
 

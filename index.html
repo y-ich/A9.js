@@ -2,35 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <title>A9.js</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <script src="js/jgoboard-latest.js"></script>
-    <script src="large/board.js"></script>
-    <script src="js/jgo-extension.js"></script>
-    <script src="js/webdnn.js"></script>
-    <script src="js/waudio.js"></script>
-    <script src="js/jssgf.js"></script>
-    <script src="js/board_controller.js"></script>
-    <!--script src="js/debug.js"></script-->
-    <style type="text/css">
-        html,body {
-            padding: 0px;
-            margin: 0px;
-            width: 100%;
-            height: 100%;
-        }
-        #board {
-        }
-        #board canvas {
-            max-width: 800px;
-            max-height: 800px;
-            display: block;
-            margin: auto;
-            pointer-events: auto;
-        }
-    </style>
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -41,64 +15,111 @@
       ga('send', 'pageview');
 
     </script>
+    <style type="text/css">
+    #board > canvas {
+        width: 100%;
+    }
+    #retry {
+        display: none;
+    }
+    .end #retry {
+        display: inline-block;
+    }
+    .end #resign, .end #pass {
+        display: none;
+    }
+    </style>
 </head>
 <body>
-    <div>
-        <div id="white-captures" style="float: left;">0</div>
-        <div id="black-captures" style="float: right;">0</div>
+    <div class="clearfix">
+        <div style="font-size: xx-large; float: left; padding: 10px;">
+            <div id="opponent-captures">0</div>
+        </div>
     </div>
     <div id="board"></div>
-    <div class="text-center">
-        <button id="resign" type="button" class="btn btn-danger">Resign</button>
-        <button id="pass" type="button" class="btn btn-default">Pass</button>
+    <div class="clearfix">
+        <div style="font-size: xx-large; float: right; padding: 10px;">
+            <div id="own-captures">0</div>
+        </div>
     </div>
     <div class="text-center">
-        <textarea name="sgf" id="sgf" cols="30" rows="10"></textarea>
+        <button id="resign" type="button" class="btn btn-danger">投了</button>
+        <button id="pass" type="button" class="btn btn-default">パス</button>
+        <button id="retry" type="button" class="btn btn-primary">もう1ゲーム</button>
     </div>
     <div class="modal fade" id="start-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="myModalLabel">Select Play Conditions</h4>
+                    <h4 class="modal-title" id="myModalLabel">対局条件を決めてください</h4>
                 </div>
                 <div class="modal-body">
-                    <h4>Conditions</h4>
-                    <form id="condition-form" class="form-horizontal">
-                        <div class="form-group">
-                            <label for="komi" class="col-sm-3 control-label">Komi</label>
+                    <h5>対局条件</h5>
+                    <form id="condition-form" class="clearfix">
+                        <div class="form-group row">
+                            <label for="komi" class="col-sm-3 col-form-label">コミ</label>
                             <div class="col-sm-9">
-                                <input type="number" value="7" disabled>
+                                <label class="col-form-label">7目</label>
                             </div>
                         </div>
-                        <div class="form-groupp">
-                            <label for="color" class="col-sm-3 control-label">Your Color</label>
+                        <div class="form-group row">
+                            <legend class="col-sm-3 col-form-label pt-0">手番</legend>
                             <div class="col-ms-9">
-                                <label class="radio-inline">
-                                    <input type="radio" name="color" value="self" checked>Self
-                                </label>
-                                <label class="radio-inline">
-                                    <input type="radio" name="color" value="B">Black
-                                </label>
-                                <label class="radio-inline">
-                                    <input type="radio" name="color" value="W">White
-                                </label>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input id="self-play" type="radio" name="color" value="self-play" class="custom-control-input" checked>
+                                    <label class="custom-control-label" for="self-play">観戦</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input id="black" type="radio" name="color" value="B" class="custom-control-input">
+                                    <label class="custom-control-label" for="black">先手番(黒)</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input id="white" type="radio" name="color" value="W" class="custom-control-input">
+                                    <label class="custom-control-label" for="white">後手番(白)</label>
+                                </div>
                             </div>
                         </div>
+                        <div class="form-group row">
+                            <label for="time" class="col-sm-3 col-form-label">秒読み</label>
+                            <div class="col-sm-9">
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input id="ai-time" type="radio" name="time" value="ai-time" class="custom-control-input" checked>
+                                    <label class="custom-control-label" for="ai-time">囲碁AIだけ秒読み</label>
+                                    <input type="number" class="custom-control custom-control-inline" name="ai-byoyomi" value="10" style="max-width: 5em;">秒
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input id="igo-quest" type="radio" name="time" value="igo-quest" class="custom-control-input" disabled>
+                                    <label class="custom-control-label" for="igo-quest">囲碁クエストルール</label>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary float-right" data-dismiss="modal">対局開始</button>
                     </form>
-                    <h4>Thanks to</h4>
-                    <ul>
-                        <li><a href="https://github.com/ymgaq/Pyaq">Pyaq</a></li>
-                        <li><a href="https://github.com/mil-tokyo/webdnn">WebDNN</a></li>
-                        <li><a href="http://jgoboard.com/">jGoBoard</a></li>
-                        <li><a href="http://soundeffect-lab.info/sound/various/various3.html">効果音ラボ(石音)</a></li>
+
+                    <hr>
+                    <h5>謝辞</h5>
+                    <p>
+                        本アプリには色々な素晴らしいライブラリを利用させていただいています。特に以下のライブラリに感謝いたします。
+                    </p>
+                    <ul class="list-group">
+                        <li class="list-group-item"><a href="https://github.com/ymgaq/Pyaq">Pyaq</a></li>
+                        <li class="list-group-item"><a href="https://github.com/mil-tokyo/webdnn">WebDNN</a></li>
+                        <li class="list-group-item"><a href="http://jgoboard.com/">jGoBoard</a></li>
+                        <li class="list-group-item"><a href="http://soundeffect-lab.info/sound/various/various3.html">効果音ラボ(石音)</a></li>
                     </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
                 </div>
             </div>
         </div>
     </div>
-    <script src="./js/a9.js?dummy=3"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="js/jgoboard-latest.js"></script>
+    <script src="large/board.js"></script>
+    <script src="js/jgo-extension.js"></script>
+    <script src="js/webdnn.js"></script>
+    <script src="js/waudio.js"></script>
+    <script src="js/jssgf.js"></script>
+    <script src="js/board_controller.js"></script>
+    <script src="/js/a9.js"></script>
 </body>
 </html>
