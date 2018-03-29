@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/*.js -o js/a9.js"
+    "build": "npm run client-build && npm run worker-build",
+    "client-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/main.js -o js/a9.js",
+    "worker-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/worker.js -o js/worker.js"
   },
   "author": "",
   "license": "ISC",

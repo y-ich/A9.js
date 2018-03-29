@@ -1,47 +1,44 @@
-/* global $ JGO BoardController */
+/* global $ JGO BoardController WorkerProcedureCall */
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';
 import { EMPTY } from './intersection.js';
-import { Board } from './board.js';
-import { Tree } from './search.js';
 
 class A9Engine {
-    constructor(nn) {
-        this.b = new Board();
-        this.tree = new Tree(nn);
+    constructor(nn, worker) {
+        this.worker = worker;
+        this.receiver = new WorkerProcedureCall(this.worker, this.constructor.name);
     }
 
-    clear() {
-        this.b.clear();
-        this.tree.clear();
+    async clear() {
+        await this.receiver.call('clear');
     }
 
-    timeSettings(mainTime, byoyomi) {
-        this.tree.setTime(mainTime, byoyomi);
+    async timeSettings(mainTime, byoyomi) {
+        await this.receiver.call('timeSettings', [mainTime, byoyomi]);
     }
 
     async genmove() {
         const [move, winRate] = await this.bestMove();
+        console.log(move, winRate);
         if (winRate < 0.1) {
             return 'resign';
-        } else if (move === PASS || this.b.state[move] === EMPTY) {
-            this.b.play(move, true);
-            return ev2str(move);
         } else {
-            console.log('error');
-            console.log('%d(%s) is not empty', move, ev2str(move));
-            this.b.showboard();
-            console.log(this.b.candidates());
+            await this.play(move);
+            return ev2str(move);
         }
     }
 
-    play(ev) {
-        this.b.play(ev, false);
+    async play(ev) {
+        await this.receiver.call('play', [ev]);
     }
 
     async bestMove() {
-        return await this.tree.search(this.b, 0.0, false, false);
+        return await this.receiver.call('bestMove');
+    }
+
+    async finalScore() {
+        return await this.receiver.call('finalScore');
     }
 }
 
@@ -57,7 +54,7 @@ class PlayController {
     }
     async update(coord) {
         if (coord === 'end') {
-            const score = this.engine.b.finalScore();
+            const score = await this.engine.finalScore();
             const message = score === 0 ?
                 '持碁' : (
                     score > 0 ?
@@ -132,10 +129,10 @@ async function main() {
         });
         switch (condition.timeRule) {
             case 'ai-time':
-            engine.timeSettings(0, condition.time);
+            await engine.timeSettings(0, condition.time);
             break;
             case 'igo-quest':
-            engine.timeSettings(3 * 60 + 55, 1); // 9路盤は平均手数が110手らしいので、55のフィッシャー秒を追加
+            await engine.timeSettings(3 * 60 + 55, 1); // 9路盤は平均手数が110手らしいので、55のフィッシャー秒を追加
             break;
         }
         board.setOwnColor(condition.color === 'W' ? JGO.WHITE : JGO.BLACK);
@@ -159,6 +156,7 @@ async function main() {
     }, 0);
 }
 
-const nn = new NeuralNetwork();
-const engine = new A9Engine(nn);
+const worker = new Worker('js/worker.js');
+const nn = new NeuralNetwork(worker);
+const engine = new A9Engine(nn, worker);
 main();
