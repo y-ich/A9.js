@@ -7,6 +7,8 @@ export class NeuralNetwork {
     }
 
     async evaluate(b) {
-        return await this.receiver.call('evaluate', [b.feature()]);
+        const result = await this.receiver.call('evaluate', [b.feature()]);
+        self.PONDER_STOP = result.pop();
+        return result;
     }
 }

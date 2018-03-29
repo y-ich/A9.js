@@ -296,7 +296,15 @@ export class Tree {
         this.deleteNode();
 
         const time_ = (time === 0.0 ? this.getSearchTime() : time) * 1000;
-        const [nextMove, winRate] = await this._search(b, ponder, clean, function() {
+        if (ponder) {
+            self.PONDER_STOP = false;
+        }
+        const [nextMove, winRate] = await this._search(b, ponder, clean, ponder ? function() {
+            if (self.PONDER_STOP) {
+                console.log('worker ponder stop');
+            }
+            return self.PONDER_STOP;
+        } : function() {
             return Date.now() - start > time_;
         });
 

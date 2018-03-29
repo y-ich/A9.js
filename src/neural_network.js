@@ -31,6 +31,7 @@ export class NeuralNetwork {
         views[0].set(feature);
         await this.nn.run();
         const result = this.nn.getOutputViews().map(e => e.toActual());
+        result.push(window.PONDER_STOP);
         return result;
     }
 }

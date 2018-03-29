@@ -50,6 +50,11 @@ class A9Engine {
     finalScore() {
         return this.b.finalScore();
     }
+
+    async ponder() {
+        console.log('worker ponder');
+        return await this.tree.search(this.b, Infinity, true, false);
+    }
 }
 
 const nn = new NeuralNetwork();

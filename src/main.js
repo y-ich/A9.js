@@ -11,6 +11,7 @@ class A9Engine {
     }
 
     async clear() {
+        await this.stopPonder();
         await this.receiver.call('clear');
     }
 
@@ -40,6 +41,20 @@ class A9Engine {
     async finalScore() {
         return await this.receiver.call('finalScore');
     }
+
+    startPonder() {
+        this.ponderPromise = this.receiver.call('ponder');
+    }
+
+    async stopPonder() {
+        if (this.ponderPromise) {
+            window.PONDER_STOP = true;
+            await this.ponderPromise;
+            this.ponderPromise = null;
+            window.PONDER_STOP = false;
+            console.log('ponder stopped');
+        }
+    }
 }
 
 class PlayController {
@@ -66,7 +81,8 @@ class PlayController {
             return;
         }
         if (!this.isSelfPlay && typeof coord === 'object') {
-            this.engine.play(xy2ev(coord.i + 1, BSIZE - coord.j));
+            await this.engine.stopPonder();
+            await this.engine.play(xy2ev(coord.i + 1, BSIZE - coord.j));
         }
         if (this.isSelfPlay || this.board.turn !== this.board.ownColor) {
             setTimeout(async () => {
@@ -86,11 +102,14 @@ class PlayController {
                     }
                 }
             }, 0);
+        } else {
+            this.engine.startPonder();
         }
     }
 
-    pass() {
+    async pass() {
         if (this.board.ownColor === this.board.turn) {
+            await this.engine.stopPonder();
             this.engine.play(PASS);
             this.board.play(null);
         }
@@ -142,7 +161,8 @@ async function main() {
         $('#pass').on('click', function(event) {
             controller.pass();
         });
-        $('#resign').on('click', function(event) {
+        $('#resign').on('click', async function(event) {
+            await engine.stopPonder();
             $(document.body).addClass('end');
         });
         $('#retry').one('click', async function(event) {
