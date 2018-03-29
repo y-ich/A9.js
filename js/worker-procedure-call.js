@@ -1,3 +1,14 @@
+function isTransferable(instance) {
+    const transferable = [ArrayBuffer];
+    if (typeof MessagePort !== 'undefined') {
+        transferable.push(MessagePort);
+    }
+    if (typeof ImageBitmap !== 'undefined') {
+        transferable.push(ImageBitmap);
+    }
+    return transferable.some(e => instance instanceof e);
+}
+
 class WorkerProcedureCall {
     constructor(receiver, signature) {
         this.receiver = receiver;
@@ -23,7 +34,7 @@ class WorkerProcedureCall {
             const argTypes = {};
             const transferList = [];
             for (let i; i < args.length; i++) {
-                if ([ArrayBuffer, MessagePort, ImageBitmap].some(e => args[i] instanceof e)) {
+                if (isTransferable(args[i])) {
                     transferList.push(args[i]);
                 } else if (ArrayBuffer.isView(args[i])) {
                     argTypes[i] = args[i].constructor.name;
@@ -68,7 +79,7 @@ function addProcedureListener(target, thisArg) {
         const transferList = [];
         if (result instanceof Array) {
             for (const e of result) {
-                if (e instanceof ArrayBuffer || e instanceof MessagePort || e instanceof ImageBitmap) {
+                if (isTransferable(e)) {
                     transferList.push(e);
                 }
             }
