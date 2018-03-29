@@ -30,7 +30,7 @@ export class NeuralNetwork {
         const views = this.nn.getInputViews();
         views[0].set(feature);
         await this.nn.run();
-        const result = this.nn.getOutputViews().map(e => e.toActual());
+        const result = this.nn.getOutputViews().map(e => e.toActual().slice(0)); // to.Actualそのものではworker側でdetachができない模様
         result.push(window.PONDER_STOP);
         return result;
     }

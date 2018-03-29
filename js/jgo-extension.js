@@ -56,7 +56,6 @@ JGO.Node.prototype.toSgf = function(recursive) {
     let result = ';';
 
     if (!this.parent) { // ルートノード
-        console.log(this);
         result += 'FF[4]GM[1]';
         result += info2sgf(this.info);
         result += `SZ[${this.jboard.width}]`;

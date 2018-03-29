@@ -31,15 +31,12 @@ class WorkerProcedureCall {
             this.id += 1;
             this.resRejs[this.id] = { resolve, reject };
             // TODO 引数のトップレベルだけTransferableのチェックをしている。
-            const argTypes = {};
             const transferList = [];
-            for (let i; i < args.length; i++) {
-                if (isTransferable(args[i])) {
-                    transferList.push(args[i]);
-                } else if (ArrayBuffer.isView(args[i])) {
-                    argTypes[i] = args[i].constructor.name;
-                    args[i] = args[i].buffer;
-                    transferList.push(args[i]);
+            for (const e of args) {
+                if (isTransferable(e)) {
+                    transferList.push(e);
+                } else if (ArrayBuffer.isView(e)) {
+                    transferList.push(e.buffer);
                 }
             }
             this.receiver.postMessage({
@@ -47,7 +44,6 @@ class WorkerProcedureCall {
                 id: this.id,
                 func,
                 args,
-                argTypes
             }, transferList);
         });
     }
@@ -72,15 +68,14 @@ function addProcedureListener(target, thisArg) {
         if (data.signature !== thisArg.constructor.name) {
             return;
         }
-        for (const key in data.argTypes) {
-            data.args[key] = new eval(data.argTypes)(data.args[key]);
-        }
         let result = await thisArg[data.func].apply(thisArg, data.args);
         const transferList = [];
         if (result instanceof Array) {
             for (const e of result) {
                 if (isTransferable(e)) {
                     transferList.push(e);
+                } else if (ArrayBuffer.isView(e)) {
+                    transferList.push(e.buffer);
                 }
             }
         }

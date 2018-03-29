@@ -52,7 +52,6 @@ class A9Engine {
     }
 
     async ponder() {
-        console.log('worker ponder');
         return await this.tree.search(this.b, Infinity, true, false);
     }
 }

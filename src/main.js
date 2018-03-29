@@ -21,7 +21,6 @@ class A9Engine {
 
     async genmove() {
         const [move, winRate] = await this.bestMove();
-        console.log(move, winRate);
         if (winRate < 0.1) {
             return 'resign';
         } else {
@@ -52,7 +51,6 @@ class A9Engine {
             await this.ponderPromise;
             this.ponderPromise = null;
             window.PONDER_STOP = false;
-            console.log('ponder stopped');
         }
     }
 }
