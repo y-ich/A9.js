@@ -137,7 +137,10 @@ class BoardController {
             this.jboard.setType(this.lastHover, JGO.CLEAR);
             this.lastHover = null;
         }
-        this.play(coord);
+        if (coord.i >= 0 && coord.i < this.jboard.width &&
+            coord.j >= 0 && coord.j < this.jboard.height) {
+            this.play(coord);
+        }
     }
 
     moveHandler(coord, ev) {
