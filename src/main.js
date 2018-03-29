@@ -2,7 +2,7 @@
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';
-import { EMPTY } from './intersection.js';
+import { speak } from './speech.js';
 
 class A9Engine {
     constructor(nn, worker) {
@@ -87,11 +87,12 @@ class PlayController {
                 const move = await this.engine.genmove();
                 switch (move) {
                     case 'resign':
-                    alert('負けました');
+                    speak('負けました', 'ja-jp', 'female');
                     $(document.body).addClass('end');
                     break;
                     case 'pass':
                     this.board.play(null);
+                    speak('パスします', 'ja-jp', 'female');
                     break;
                     default: {
                         const ev = str2ev(move);
@@ -125,8 +126,8 @@ async function main() {
         } catch(e) {
             if (e.message === 'No backend is available') {
                 if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                    alert('残念ながらお使いのブラウザでは動きません。Safariをお使いですね。「開発」メニューの「実験的な機能」で「WebGPU」を有効にすると動くかもしれません');
-                } else {
+                    speak('残念ながらお使いのブラウザでは動きません。Safariをお使いですね。「開発」メニューの「実験的な機能」で「WebGPU」を有効にすると動くかもしれません', 'ja-jp', 'female');
+                } else if (!speak('残念ながらお使いのブラウザでは動きません', 'ja-jp', 'female')) {
                     alert('残念ながらお使いのブラウザでは動きません');
                 }
             }
@@ -154,13 +155,18 @@ async function main() {
         }
         board.setOwnColor(condition.color === 'W' ? JGO.WHITE : JGO.BLACK);
         const controller = new PlayController(engine, board);
-        controller.setIsSelfPlay(condition.color === 'self-play');
+        const isSelfPlay = condition.color === 'self-play';
+        if (!isSelfPlay) {
+            speak('お願いします', 'ja-jp', 'female');
+        }
+        controller.setIsSelfPlay(isSelfPlay);
         board.addObserver(controller);
         $('#pass').on('click', function(event) {
             controller.pass();
         });
         $('#resign').on('click', async function(event) {
             await engine.stopPonder();
+            speak('ありがとうございました', 'ja-jp', 'female');
             $(document.body).addClass('end');
         });
         $('#retry').one('click', async function(event) {
