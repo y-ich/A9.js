@@ -106,19 +106,19 @@ export class Tree {
         return nodeId;
     }
 
-    bestByActionValue(b, nodeId) {
+    bestByUCB(b, nodeId) {
         const nd = this.node[nodeId];
         const ndRate = nd.totalCnt === 0 ? 0.0 : nd.totalValue / nd.totalCnt;
         const cpsv = TREE_CP * Math.sqrt(nd.totalCnt);
-        const rate = new Float32Array(BVCNT + 1);
-        for (let i = 0; i < rate.length; i++) {
-            rate[i] = nd.visitCnt[i] === 0 ? ndRate : nd.valueWin[i] / nd.visitCnt[i];
-        }
-        const actionValue = new Float32Array(nd.branchCnt);
+        const actionValue = new Float32Array(BVCNT + 1);
         for (let i = 0; i < actionValue.length; i++) {
-            actionValue[i] = rate[i] + cpsv * nd.prob[i] / (nd.visitCnt[i] + 1);
+            actionValue[i] = nd.visitCnt[i] === 0 ? ndRate : nd.valueWin[i] / nd.visitCnt[i];
         }
-        const best = argmax(actionValue);
+        const ucb = new Float32Array(nd.branchCnt);
+        for (let i = 0; i < ucb.length; i++) {
+            ucb[i] = actionValue[i] + cpsv * nd.prob[i] / (nd.visitCnt[i] + 1);
+        }
+        const best = argmax(ucb);
         const nextId = nd.nextId[best];
         const nextMove = nd.move[best];
         const isHeadNode = !this.hasNext(nodeId, best, b.getMoveCnt() + 1) ||
@@ -233,7 +233,7 @@ export class Tree {
     }
 
     async searchBranch(b, nodeId, route) {
-        const [best, nextId, nextMove, isHeadNode] = this.bestByActionValue(b, nodeId);
+        const [best, nextId, nextMove, isHeadNode] = this.bestByUCB(b, nodeId);
         route.push([nodeId, best]);
         b.play(nextMove, false);
         const nd = this.node[nodeId];
