@@ -52,3 +52,20 @@ export function speak(text, lang, gender) {
     speechSynthesis.speak(utterance);
     return true;
 }
+
+function unlock() {
+    window.removeEventListener('click', unlock);
+    speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+}
+
+window.addEventListener('load', function(event) {
+    if (speechSynthesis) {
+        speechSynthesis.getVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = function() {
+                console.log('onvoiceschanged');
+            }
+        }
+        window.addEventListener('click', unlock, false); // for iOS
+    }
+});
