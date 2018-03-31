@@ -1,7 +1,7 @@
 /* global $ JGO BoardController WorkerProcedureCall */
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
-import { BSIZE, PASS } from './constants.js';
+import { BSIZE, PASS, KOMI } from './constants.js';
 import { speak } from './speech.js';
 
 class A9Engine {
@@ -67,15 +67,23 @@ class PlayController {
     }
     async update(coord) {
         if (coord === 'end') {
-            const score = await this.engine.finalScore();
-            const message = score === 0 ?
-                '持碁' : (
-                    score > 0 ?
-                        `黒${score}目勝ち` :
-                        `白${-score}目勝ち`
-                );
-            alert(message + 'ですか？すみません、整地苦手です…');
-            $(document.body).addClass('end');
+            try {
+                const score = await this.finalScore();
+                let message = score === 0 ?
+                    '持碁' : (
+                        score > 0 ?
+                            `黒${score}目勝ち` :
+                            `白${-score}目勝ち`
+                    );
+                message += 'ですか？';
+                speak(message);
+                setTimeout(function() {
+                    alert(message);
+                    $(document.body).addClass('end');
+                }, 3000);
+            } catch (e) {
+                speak('すみません、整地できませんでした');
+            }
             return;
         }
         if (!this.isSelfPlay && typeof coord === 'object') {
@@ -113,6 +121,33 @@ class PlayController {
             this.board.play(null);
         }
     }
+
+    async finalScore() {
+        const result = await $.post({
+            url: 'http://35.203.161.100/gnugo',
+            data: {
+                sgf: this.board.jrecord.toSgf(),
+                move: 'est',
+                method: 'aftermath',
+                rule: 'chinese'
+            }
+        });
+        if (/Jigo/.test(result)) {
+            return 0;
+        }
+        const match = result.match(/(Black|White) wins by ([0-9.]+) points/);
+        if (match) {
+            let score = parseFloat(match[2]);
+            if (match[1] === 'Black') {
+                return score;
+            } else {
+                return -score;
+            }
+        } else {
+            return null;
+        }
+    }
+
 }
 
 async function main() {

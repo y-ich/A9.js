@@ -18,8 +18,7 @@ class BoardController {
         this.observers = [];
         this.passNum = 0;
 
-        this.jrecord = new JGO.Record(boardSize);
-        this.jrecord.createNode(false); // root node
+        this.jrecord = JGO.sgf.load(`(;SZ[${boardSize}]KM[7])`, false);
         this.jboard = this.jrecord.getBoard();
         if (handicap >= 2) {
             const stones = JGO.util.getHandicapCoordinates(this.jboard.width,
