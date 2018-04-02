@@ -6,6 +6,10 @@ import { BSIZE, PASS } from './constants.js';
 import { speak } from './speech.js';
 
 class A9Engine extends WorkerRMI {
+    async loadNN() {
+        await this.invokeRM('loadNN');
+    }
+
     async clear() {
         await this.stopPonder();
         await this.invokeRM('clear');
@@ -152,7 +156,7 @@ async function main() {
     // JGOのレンダリングを完了させるためにsetTimeoutでイベントループを進める
     setTimeout(async function() {
         try {
-            await nn.load();
+            await engine.loadNN();
         } catch(e) {
             if (e.message === 'No backend is available') {
                 if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
@@ -160,6 +164,8 @@ async function main() {
                 } else if (!speak('残念ながらお使いのブラウザでは動きません', 'ja-jp', 'female')) {
                     alert('残念ながらお使いのブラウザでは動きません');
                 }
+            } else {
+                console.error(e);
             }
             return;
         }

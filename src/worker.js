@@ -9,7 +9,12 @@ import { Tree } from './search.js';
 class A9Engine {
     constructor() {
         this.b = new Board();
-        this.tree = new Tree(new NeuralNetwork(self));
+        this.nn = new NeuralNetwork(self);
+        this.tree = new Tree(this.nn);
+    }
+
+    async loadNN() {
+        await this.nn.invokeRM('load');
     }
 
     clear() {

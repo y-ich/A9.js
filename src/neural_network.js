@@ -1,5 +1,4 @@
 /* global WebDNN */
-import { resigterWorkerRMI } from './worker-rmi.js';
 
 if (!ArrayBuffer.prototype.slice) {
     ArrayBuffer.prototype.slice = function(start, end) {
@@ -14,7 +13,7 @@ if (!ArrayBuffer.prototype.slice) {
 }
 
 export class NeuralNetwork {
-    constructor(worker) {
+    constructor() {
         this.nn = null;
     }
 

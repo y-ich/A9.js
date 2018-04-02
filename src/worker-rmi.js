@@ -42,14 +42,14 @@ export class WorkerRMI {
                 this.returnHandler(data);
             }
         }, false);
-        this.constructorPromise = this.call(this.constructor.name, args);
+        this.constructorPromise = this.invokeRM(this.constructor.name, args);
     }
 
     invokeRM(methodName, args = []) {
         if (!this.methodStates[methodName]) {
             this.methodStates[methodName] = {
                 num: 0,
-                resolveReject: {}
+                resolveRejects: {}
             };
         }
         return new Promise((resolve, reject) => {
@@ -66,13 +66,13 @@ export class WorkerRMI {
     }
 
     returnHandler(data) {
-        const resolveReject = this.methodStates[data.methodName].resolveReject;
+        const resolveRejects = this.methodStates[data.methodName].resolveRejects;
         if (data.error) {
-            resolveReject[data.id].reject(data.error);
+            resolveRejects[data.num].reject(data.error);
         } else {
-            resolveReject[data.id].resolve(data.result);
+            resolveRejects[data.num].resolve(data.result);
         }
-        delete resolveReject[data.id];
+        delete resolveRejects[data.num];
     }
 }
 
@@ -89,13 +89,17 @@ export function resigterWorkerRMI(target, klass) {
             num: data.num,
         };
         let result;
-        if (data.methodName === this.name) {
-            this.workerRMI.instances[data.id] = new this(...data.args);
-            result = null;
+        if (data.methodName === klass.name) {
+            klass.workerRMI.instances[data.id] = new klass(...data.args);
+            message.result = null;
+            klass.workerRMI.target.postMessage(message, getTransferList(result));
         } else {
-            result = await this.workerRMI.instances[data.id][data.methodName].apply(this.objs[data.id], data.args)
+            const instance = klass.workerRMI.instances[data.id];
+            if (instance) {
+                result = await instance[data.methodName].apply(instance, data.args)
+                message.result = result;
+                klass.workerRMI.target.postMessage(message, getTransferList(result));
+            }
         }
-        message.result = result;
-        this.workerRMI.target.postMessage(message, getTransferList(result));
     }, false);
 }
