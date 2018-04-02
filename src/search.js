@@ -208,14 +208,14 @@ export class Tree {
     }
 
     async preSearch(b) {
-        const [prob] = await this.nn.evaluate(b);
+        const [prob] = await this.nn.evaluate(b.feature());
         this.rootId = this.createNode(b, prob);
         this.rootMoveCnt = b.getMoveCnt();
         TREE_CP = this.rootMoveCnt < 8 ? 0.01 : 1.5;
     }
 
     async evaluateChildNode(b, nodeId, child) {
-        let [prob, value] = await this.nn.evaluate(b);
+        let [prob, value] = await this.nn.evaluate(b.feature());
         this.evalCnt += 1;
         value = -value[0];
         const nd = this.node[nodeId];

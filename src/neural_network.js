@@ -26,9 +26,11 @@ export class NeuralNetwork {
         this.nn = await WebDNN.load('./output', { backendOrder: ['webgpu', 'webgl'] });
     }
 
-    async evaluate(feature) {
+    async evaluate(...inputs) {
         const views = this.nn.getInputViews();
-        views[0].set(feature);
+        for (let i = 0; i < inputs.length; i++) {
+            views[i].set(inputs[i]);
+        }
         await this.nn.run();
         const result = this.nn.getOutputViews().map(e => e.toActual().slice(0)); // to.Actualそのものではworker側でdetachができない模様
         result.push(window.PONDER_STOP);

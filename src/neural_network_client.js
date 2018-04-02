@@ -6,8 +6,8 @@ export class NeuralNetwork {
         this.receiver = new WorkerProcedureCall(self, this.constructor.name);
     }
 
-    async evaluate(b) {
-        const result = await this.receiver.call('evaluate', [b.feature()]);
+    async evaluate(...inputs) {
+        const result = await this.receiver.call('evaluate', inputs);
         self.PONDER_STOP = result.pop();
         return result;
     }
