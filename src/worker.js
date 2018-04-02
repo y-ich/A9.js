@@ -1,18 +1,15 @@
-/* global $ JGO BoardController addProcedureListener */
+import { resigterWorkerRMI } from './worker-rmi.js';
 import { NeuralNetwork } from './neural_network_client.js';
-import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
-import { BSIZE, PASS } from './constants.js';
+import { ev2str } from './coord_convert.js';
+import { PASS } from './constants.js';
 import { EMPTY } from './intersection.js';
 import { Board } from './board.js';
 import { Tree } from './search.js';
 
-self.importScripts('worker-procedure-call.js');
-
 class A9Engine {
     constructor() {
         this.b = new Board();
-        this.tree = new Tree(nn);
-        addProcedureListener(self, this);
+        this.tree = new Tree(new NeuralNetwork(self));
     }
 
     clear() {
@@ -60,5 +57,4 @@ class A9Engine {
     }
 }
 
-const nn = new NeuralNetwork();
-const engine = new A9Engine(nn);
+resigterWorkerRMI(self, A9Engine);

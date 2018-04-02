@@ -1,22 +1,18 @@
-/* global $ JGO BoardController WorkerProcedureCall */
+/* global $ JGO BoardController */
+import { WorkerRMI, resigterWorkerRMI } from './worker-rmi.js';
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
-import { BSIZE, PASS, KOMI } from './constants.js';
+import { BSIZE, PASS } from './constants.js';
 import { speak } from './speech.js';
 
-class A9Engine {
-    constructor(nn, worker) {
-        this.worker = worker;
-        this.receiver = new WorkerProcedureCall(this.worker, this.constructor.name);
-    }
-
+class A9Engine extends WorkerRMI {
     async clear() {
         await this.stopPonder();
-        await this.receiver.call('clear');
+        await this.invokeRM('clear');
     }
 
     async timeSettings(mainTime, byoyomi) {
-        await this.receiver.call('timeSettings', [mainTime, byoyomi]);
+        await this.invokeRM('timeSettings', [mainTime, byoyomi]);
     }
 
     async genmove() {
@@ -30,24 +26,24 @@ class A9Engine {
     }
 
     async play(ev) {
-        await this.receiver.call('play', [ev]);
+        await this.invokeRM('play', [ev]);
     }
 
     async bestMove() {
-        return await this.receiver.call('bestMove');
+        return await this.invokeRM('bestMove');
     }
 
     async finalScore() {
-        return await this.receiver.call('finalScore');
+        return await this.invokeRM('finalScore');
     }
 
     startPonder() {
-        this.ponderPromise = this.receiver.call('ponder');
+        this.ponderPromise = this.invokeRM('ponder');
     }
 
     async stopPonder() {
         if (this.ponderPromise) {
-            await this.receiver.call('stopPonder');
+            await this.invokeRM('stopPonder');
             await this.ponderPromise;
             this.ponderPromise = null;
         }
@@ -215,6 +211,6 @@ async function main() {
 }
 
 const worker = new Worker('js/worker.js');
-const nn = new NeuralNetwork(worker);
-const engine = new A9Engine(nn, worker);
+resigterWorkerRMI(worker, NeuralNetwork);
+const engine = new A9Engine(worker);
 main();
