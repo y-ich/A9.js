@@ -47,10 +47,9 @@ class A9Engine {
 
     async stopPonder() {
         if (this.ponderPromise) {
-            window.PONDER_STOP = true;
+            await this.receiver.call('stopPonder');
             await this.ponderPromise;
             this.ponderPromise = null;
-            window.PONDER_STOP = false;
         }
     }
 }

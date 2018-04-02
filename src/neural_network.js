@@ -32,8 +32,6 @@ export class NeuralNetwork {
             views[i].set(inputs[i]);
         }
         await this.nn.run();
-        const result = this.nn.getOutputViews().map(e => e.toActual().slice(0)); // to.Actualそのものではworker側でdetachができない模様
-        result.push(window.PONDER_STOP);
-        return result;
+        return this.nn.getOutputViews().map(e => e.toActual().slice(0)); // to.Actualそのものではworker側でdetachができない模様
     }
 }

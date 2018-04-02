@@ -54,6 +54,10 @@ class A9Engine {
     async ponder() {
         return await this.tree.search(this.b, Infinity, true, false);
     }
+
+    stopPonder() {
+        self.PONDER_STOP = true;
+    }
 }
 
 const nn = new NeuralNetwork();
