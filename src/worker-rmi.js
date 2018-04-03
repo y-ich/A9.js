@@ -76,30 +76,39 @@ export class WorkerRMI {
     }
 }
 
+
+async function handleWorkerRMI(event) {
+    const data = event.data;
+    const message = {
+        id: data.id,
+        methodName: data.methodName,
+        num: data.num,
+    };
+    let result;
+    if (data.methodName === this.name) {
+        this.workerRMI.instances[data.id] = new this(...data.args);
+        message.result = null;
+        this.workerRMI.target.postMessage(message, getTransferList(result));
+    } else {
+        const instance = this.workerRMI.instances[data.id];
+        if (instance) {
+            result = await instance[data.methodName].apply(instance, data.args)
+            message.result = result;
+            this.workerRMI.target.postMessage(message, getTransferList(result));
+        }
+    }
+}
+
 export function resigterWorkerRMI(target, klass) {
     klass.workerRMI = {
         target,
-        instances: {}
+        instances: {},
+        handler: handleWorkerRMI.bind(klass)
     }
-    target.addEventListener('message', async event => {
-        const data = event.data;
-        const message = {
-            id: data.id,
-            methodName: data.methodName,
-            num: data.num,
-        };
-        let result;
-        if (data.methodName === klass.name) {
-            klass.workerRMI.instances[data.id] = new klass(...data.args);
-            message.result = null;
-            klass.workerRMI.target.postMessage(message, getTransferList(result));
-        } else {
-            const instance = klass.workerRMI.instances[data.id];
-            if (instance) {
-                result = await instance[data.methodName].apply(instance, data.args)
-                message.result = result;
-                klass.workerRMI.target.postMessage(message, getTransferList(result));
-            }
-        }
-    }, false);
+    target.addEventListener('message', klass.workerRMI.handler);
+}
+
+export function unresigterWorkerRMI(target, klass) {
+    target.removeEventListener('message', klass.workerRMI.handler)
+    delete klass.workerRMI;
 }
