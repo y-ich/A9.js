@@ -55,17 +55,49 @@ class A9Engine extends WorkerRMI {
 }
 
 class PlayController {
-    constructor(engine, board) {
+    constructor(engine, board, igoQuest = false) {
         this.engine = engine;
         this.board = board;
         this.isSelfPlay = false;
+        if (igoQuest) {
+            this.timeLeft = [
+                0, // dumy
+                (3 * 60 + 1) * 1000, // black
+                3 * 60 * 1000, // white
+            ];
+            if (igoQuest) {
+                this.start = Date.now();
+                this.timer = setInterval(() => {
+                    const start = Date.now();
+                    this.timeLeft[this.board.turn] -= start - this.start;
+                    this.start = start;
+                    if (this.board.turn == this.board.ownColor) {
+                        $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    } else {
+                        $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    }
+                    if (this.timeLeft[this.board.turn] < 0) {
+                        clearInterval(this.timer);
+                        this.timer = null;
+                        alert('切れました');
+                    }
+                }, 100);
+            }
+        }
     }
 
+    clearTimer() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    }
     setIsSelfPlay(isSelfPlay) {
         this.isSelfPlay = isSelfPlay;
     }
     async update(coord) {
         if (coord === 'end') {
+            this.clearTimer();
             try {
                 const score = await this.finalScore();
                 let message = score === 0 ?
@@ -85,6 +117,11 @@ class PlayController {
             }
             return;
         }
+
+        if (this.start) {
+            this.timeLeft[this.board.turn] += 1000;
+        }
+
         if (!this.isSelfPlay && typeof coord === 'object') {
             await this.engine.stopPonder();
             await this.engine.play(xy2ev(coord.i + 1, BSIZE - coord.j));
@@ -94,6 +131,7 @@ class PlayController {
                 const move = await this.engine.genmove();
                 switch (move) {
                     case 'resign':
+                    this.clearTimer();
                     speak('負けました', 'ja-jp', 'female');
                     $(document.body).addClass('end');
                     break;
@@ -190,7 +228,7 @@ async function main() {
             break;
         }
         board.setOwnColor(condition.color === 'W' ? JGO.WHITE : JGO.BLACK);
-        const controller = new PlayController(engine, board);
+        const controller = new PlayController(engine, board, condition.timeRule === 'igo-quest');
         const isSelfPlay = condition.color === 'self-play';
         if (!isSelfPlay) {
             speak('お願いします', 'ja-jp', 'female');
@@ -201,6 +239,7 @@ async function main() {
             controller.pass();
         });
         $('#resign').on('click', async function(event) {
+            board.clearTimer();
             await engine.stopPonder();
             speak('ありがとうございました', 'ja-jp', 'female');
             $(document.body).addClass('end');
