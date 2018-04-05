@@ -1,4 +1,4 @@
-import { resigterWorkerRMI } from './worker-rmi.js';
+import { resigterWorkerRMI } from 'worker-rmi';
 import { NeuralNetwork } from './neural_network_client.js';
 import { ev2str } from './coord_convert.js';
 import { PASS } from './constants.js';

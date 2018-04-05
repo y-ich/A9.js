@@ -1,5 +1,5 @@
 /* global $ JGO BoardController */
-import { WorkerRMI, resigterWorkerRMI } from './worker-rmi.js';
+import { WorkerRMI, resigterWorkerRMI } from 'worker-rmi';
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';

@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bson-objectid": "^1.2.2"
+    "worker-rmi": "^1.0.5"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
