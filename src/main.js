@@ -79,7 +79,7 @@ class PlayController {
                     if (this.timeLeft[this.board.turn] < 0) {
                         clearInterval(this.timer);
                         this.timer = null;
-                        alert('切れました');
+                        alert('時間切れです');
                     }
                 }, 100);
             }
@@ -113,6 +113,7 @@ class PlayController {
                     $(document.body).addClass('end');
                 }, 3000);
             } catch (e) {
+                console.log(e);
                 speak('すみません、整地できませんでした');
             }
             return;
@@ -166,7 +167,7 @@ class PlayController {
                 sgf: this.board.jrecord.toSgf(),
                 move: 'est',
                 method: 'aftermath',
-                rule: 'chinese'
+                rule: 'japanese'
             }
         });
         if (/Jigo/.test(result)) {
