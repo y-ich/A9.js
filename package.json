@@ -2,14 +2,13 @@
   "name": "a9",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "build": "npm run client-build && npm run worker-build",
     "client-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/main.js -o js/a9.js",
     "worker-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/worker.js -o js/worker.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "ICHIKAWA, Yuji",
+  "license": "MIT",
   "dependencies": {
     "worker-rmi": "^1.0.5"
   },
