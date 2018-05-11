@@ -101,10 +101,10 @@ class PlayController {
                     $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
                 }
             }, 100);
-            $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
-            $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
         }
-    }
+        $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
+        $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
+}
 
     clearTimer() {
         if (this.timer) {
@@ -143,8 +143,9 @@ class PlayController {
 
         if (this.igoQuest) {
             this.timeLeft[this.board.turn] += 1000;
-        } else if (this.board.turn == this.board.ownColor) {
+        } else if (this.board.turn === this.board.ownColor) {
             this.timeLeft[this.board.ownColor % 2 + 1] = this.engine.byoyomi * 1000;
+            $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
         }
 
         if (!this.isSelfPlay && typeof coord === 'object') {
