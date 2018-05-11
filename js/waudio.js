@@ -15,6 +15,9 @@ class WAudio {
     static unlock() {
         // (iOS用) 何かのユーザーイベントの際に呼び出し、Web Audioを有効にする。
         // 空のソースを再生
+        if (this.context.resume) {
+            this.context.resume();
+        }
         const source = this.context.createBufferSource();
         source.buffer = this.context.createBuffer(1, 1, 22050);
         source.connect(this.context.destination);
