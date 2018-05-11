@@ -1,5 +1,5 @@
 import { argsort, argmax } from './utils.js';
-import { BSIZE, BVCNT, PASS, VNULL } from './constants.js';
+import { BVCNT, PASS, VNULL } from './constants.js';
 import { rv2ev, ev2str } from './coord_convert.js';
 import { Board } from './board.js';
 
@@ -7,17 +7,6 @@ const MAX_NODE_CNT = 16384;
 const EXPAND_CNT = 8;
 
 let TREE_CP = 2.0;
-
-function printProb(prob) {
-    for (let y = 0; y < BSIZE; y++) {
-        let str = '';
-        for (let x = 0; x < BSIZE; x++) {
-            str += ('  ' + prob[x + y * BSIZE].toFixed(1)).slice(-5);
-        }
-        console.log(str);
-    }
-    console.log('pass=%s', prob[prob.length - 1].toFixed(1));
-}
 
 export class Tree {
     constructor(nn) {

@@ -1,3 +1,5 @@
+import { BSIZE } from './constants.js';
+
 export function shuffle(array) {
     let n = array.length;
     let t;
@@ -61,4 +63,33 @@ export function hash(str) {
         hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash);
+}
+
+export function softmax(input, temperature = 1.0) {
+    const output = new Float32Array(input.length);
+    const alpha = Math.max.apply(null, input);
+    let denom = 0.0;
+
+    for (let i = 0; i < input.length; i++) {
+        const val = Math.exp((input[i] - alpha) / temperature);
+        denom += val;
+        output[i] = val;
+    }
+
+    for (let i = 0; i < output.length; i++) {
+        output[i] /= denom;
+    }
+
+    return output;
+}
+
+export function printProb(prob) {
+    for (let y = 0; y < BSIZE; y++) {
+        let str = `${y + 1} `;
+        for (let x = 0; x < BSIZE; x++) {
+            str += ('  ' + prob[x + y * BSIZE].toFixed(1)).slice(-5);
+        }
+        console.log(str);
+    }
+    console.log('pass=%s', prob[prob.length - 1].toFixed(1));
 }

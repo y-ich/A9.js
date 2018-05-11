@@ -1,5 +1,5 @@
 import { shuffle, mostCommon, hash } from './utils.js';
-import { BSIZE, EBSIZE, BVCNT, EBVCNT, VNULL, KEEP_PREV_CNT, PASS, KOMI, FEATURE_CNT } from './constants.js';
+import { BSIZE, EBSIZE, BVCNT, EBVCNT, VNULL, KEEP_PREV_CNT, PASS, LEELA_ZERO, FEATURE_CNT } from './constants.js';
 import { EMPTY, BLACK, WHITE, EXTERIOR, opponentOf } from './intersection.js';
 import { StoneGroup } from './stone_group.js';
 import { X_LABELS, xy2ev, rv2ev, ev2rv } from './coord_convert.js';
@@ -26,7 +26,8 @@ export class Candidates {
 }
 
 export class Board {
-    constructor() {
+    constructor(komi = 7) {
+        this.komi = komi;
         this.state = new Uint8Array(EBVCNT);
         this.state.fill(EXTERIOR);
         this.id = new Uint8Array(EBVCNT);
@@ -291,7 +292,7 @@ export class Board {
                 }
             }
         }
-        return stoneCnt[1] - stoneCnt[0] - KOMI;
+        return stoneCnt[1] - stoneCnt[0] - this.komi;
     }
 
     rollout(showBoard) {
@@ -345,31 +346,58 @@ export class Board {
     }
 
     feature() {
-        function index(p, f) {
-            return p * FEATURE_CNT + f;
-        }
+        const index = (p, f) => p * FEATURE_CNT + f;
         const array = new Float32Array(BVCNT * FEATURE_CNT);
-
         const my = this.turn;
         const opp = opponentOf(this.turn);
-        for (let p = 0; p < BVCNT; p++) {
-            array[index(p, 0)] = this.state[rv2ev(p)] === my ? 1.0 : 0.0;
-        }
-        for (let p = 0; p < BVCNT; p++) {
-            array[index(p, 1)] = this.state[rv2ev(p)] === opp ? 1.0 : 0.0;
-        }
-        for (let i = 0; i < KEEP_PREV_CNT; i++) {
-            for (let p = 0; p < BVCNT; p++) {
-                array[index(p, (i + 1) * 2)] = this.prevState[i][rv2ev(p)] === my ? 1.0 : 0.0;
-            }
-            for (let p = 0; p < BVCNT; p++) {
-                array[index(p, (i + 1) * 2 + 1)] = this.prevState[i][rv2ev(p)] === opp ? 1.0 : 0.0;
-            }
-        }
-        for (let p = 0; p < BVCNT; p++) {
-            array[index(p, FEATURE_CNT - 1)] = my;
-        }
 
+        if (LEELA_ZERO) {
+            const N = KEEP_PREV_CNT + 1;
+            for (let p = 0; p < BVCNT; p++) {
+                array[index(p, 0)] = this.state[rv2ev(p)] === my ? 1.0 : 0.0;
+            }
+            for (let p = 0; p < BVCNT; p++) {
+                array[index(p, N)] = this.state[rv2ev(p)] === opp ? 1.0 : 0.0;
+            }
+            for (let i = 0; i < KEEP_PREV_CNT; i++) {
+                for (let p = 0; p < BVCNT; p++) {
+                    array[index(p, i + 1)] = this.prevState[i][rv2ev(p)] === my ? 1.0 : 0.0;
+                }
+                for (let p = 0; p < BVCNT; p++) {
+                    array[index(p, N + i + 1)] = this.prevState[i][rv2ev(p)] === opp ? 1.0 : 0.0;
+                }
+            }
+            let is_black_turn, is_white_turn;
+            if (my === BLACK) {
+                is_black_turn = 1.0;
+                is_white_turn = 0.0;
+            } else {
+                is_black_turn = 0.0;
+                is_white_turn = 1.0;
+            }
+            for (let p = 0; p < BVCNT; p++) {
+                array[index(p, FEATURE_CNT - 2)] = is_black_turn;
+                array[index(p, FEATURE_CNT - 1)] = is_white_turn;
+            }
+        } else {
+            for (let p = 0; p < BVCNT; p++) {
+                array[index(p, 0)] = this.state[rv2ev(p)] === my ? 1.0 : 0.0;
+            }
+            for (let p = 0; p < BVCNT; p++) {
+                array[index(p, 1)] = this.state[rv2ev(p)] === opp ? 1.0 : 0.0;
+            }
+            for (let i = 0; i < KEEP_PREV_CNT; i++) {
+                for (let p = 0; p < BVCNT; p++) {
+                    array[index(p, (i + 1) * 2)] = this.prevState[i][rv2ev(p)] === my ? 1.0 : 0.0;
+                }
+                for (let p = 0; p < BVCNT; p++) {
+                    array[index(p, (i + 1) * 2 + 1)] = this.prevState[i][rv2ev(p)] === opp ? 1.0 : 0.0;
+                }
+            }
+            for (let p = 0; p < BVCNT; p++) {
+                array[index(p, FEATURE_CNT - 1)] = my;
+            }
+        }
         return array;
     }
 
@@ -391,7 +419,7 @@ export class Board {
     finalScore() {
         const ROLL_OUT_NUM = 256;
         const doubleScoreList = [];
-        let bCpy = new Board();
+        let bCpy = new Board(this.komi);
         for (let i = 0; i < ROLL_OUT_NUM; i++) {
             this.copyTo(bCpy);
             bCpy.rollout(false);

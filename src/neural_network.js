@@ -1,4 +1,7 @@
 /* global WebDNN */
+import { LEELA_ZERO } from './constants.js';
+import { BSIZE, BVCNT, FEATURE_CNT } from './constants.js';
+import { softmax, printProb } from './utils.js';
 
 if (!ArrayBuffer.prototype.slice) {
     ArrayBuffer.prototype.slice = function(start, end) {
@@ -21,7 +24,10 @@ export class NeuralNetwork {
         if (this.nn) {
             return;
         }
-        this.nn = await WebDNN.load('./output', { backendOrder: ['webgpu', 'webgl'] });
+        this.nn = await WebDNN.load(
+            LEELA_ZERO ? './output_leela' : './output',
+            { backendOrder: ['webgpu', 'webgl'] }
+        );
     }
 
     async evaluate(...inputs) {

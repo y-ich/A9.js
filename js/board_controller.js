@@ -6,7 +6,7 @@ const stoneSound = new WAudio('audio/go-piece1.mp3');
 
 /* jGoBoardのためのコントローラ */
 class BoardController {
-    constructor(boardSize, handicap, callback) {
+    constructor(boardSize, handicap, komi, callback) {
         this.id = 'board';
         this.ownColor = null; // ownColorはGUIを使用する側
         this.turn = JGO.BLACK;
@@ -18,7 +18,7 @@ class BoardController {
         this.observers = [];
         this.passNum = 0;
 
-        this.jrecord = JGO.sgf.load(`(;SZ[${boardSize}]KM[7])`, false);
+        this.jrecord = JGO.sgf.load(`(;SZ[${boardSize}]KM[${komi}])`, false);
         this.jboard = this.jrecord.getBoard();
         if (handicap >= 2) {
             const stones = JGO.util.getHandicapCoordinates(this.jboard.width,
@@ -56,6 +56,11 @@ class BoardController {
 
     setOwnColor(color) {
         this.ownColor = color;
+    }
+
+    setKomi(komi) {
+        const node = this.jrecord.getRootNode();
+        node.info.komi = komi.toString();
     }
 
     addObserver(observer) {

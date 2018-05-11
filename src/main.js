@@ -16,6 +16,8 @@ class A9Engine extends WorkerRMI {
     }
 
     async timeSettings(mainTime, byoyomi) {
+        this.mainTime = mainTime;
+        this.byoyomi = byoyomi;
         await this.invokeRM('timeSettings', [mainTime, byoyomi]);
     }
 
@@ -59,30 +61,48 @@ class PlayController {
         this.engine = engine;
         this.board = board;
         this.isSelfPlay = false;
+        this.igoQuest = igoQuest;
         if (igoQuest) {
             this.timeLeft = [
                 0, // dumy
                 (3 * 60 + 1) * 1000, // black
                 3 * 60 * 1000, // white
             ];
-            if (igoQuest) {
-                this.start = Date.now();
-                this.timer = setInterval(() => {
-                    const start = Date.now();
-                    this.timeLeft[this.board.turn] -= start - this.start;
-                    this.start = start;
-                    if (this.board.turn == this.board.ownColor) {
-                        $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
-                    } else {
-                        $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
-                    }
-                    if (this.timeLeft[this.board.turn] < 0) {
-                        clearInterval(this.timer);
-                        this.timer = null;
-                        alert('時間切れです');
-                    }
-                }, 100);
-            }
+            this.start = Date.now();
+            this.timer = setInterval(() => {
+                const start = Date.now();
+                this.timeLeft[this.board.turn] -= start - this.start;
+                this.start = start;
+                if (this.board.turn == this.board.ownColor) {
+                    $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                } else {
+                    $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                }
+                if (this.timeLeft[this.board.turn] < 0) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                    alert('時間切れです');
+                }
+            }, 100);
+        } else {
+            this.timeLeft = [
+                0, // dumy
+                this.board.ownColor === JGO.BLACK ? Infinity : this.engine.byoyomi * 1000, // black
+                this.board.ownColor === JGO.BLACK ? this.engine.byoyomi * 1000 : Infinity, // white
+            ];
+            this.start = Date.now();
+            this.timer = setInterval(() => {
+                const start = Date.now();
+                this.timeLeft[this.board.turn] -= start - this.start;
+                this.start = start;
+                if (this.board.turn == this.board.ownColor) {
+                    $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                } else {
+                    $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                }
+            }, 100);
+            $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
+            $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
         }
     }
 
@@ -100,14 +120,16 @@ class PlayController {
             this.clearTimer();
             try {
                 const score = await this.finalScore();
-                let message = score === 0 ?
-                    '持碁' : (
-                        score > 0 ?
-                            `黒${score}目勝ち` :
-                            `白${-score}目勝ち`
-                    );
+                let message;
+                if (score === 0) {
+                    message = '持碁';
+                } else {
+                    message = score > 0 ? '黒' : '白';
+                    const absScore = Math.abs(score);
+                    message += absScore < 1 ? '半目勝ち' : Math.floor(absScore) + '目半勝ち';
+                }
                 message += 'ですか？';
-                speak(message);
+                speak(message.replace('半', 'はん'));
                 setTimeout(function() {
                     alert(message);
                     $(document.body).addClass('end');
@@ -119,8 +141,10 @@ class PlayController {
             return;
         }
 
-        if (this.start) {
+        if (this.igoQuest) {
             this.timeLeft[this.board.turn] += 1000;
+        } else if (this.board.turn == this.board.ownColor) {
+            this.timeLeft[this.board.ownColor % 2 + 1] = this.engine.byoyomi * 1000;
         }
 
         if (!this.isSelfPlay && typeof coord === 'object') {
@@ -167,7 +191,7 @@ class PlayController {
                 sgf: this.board.jrecord.toSgf(),
                 move: 'est',
                 method: 'aftermath',
-                rule: 'japanese'
+                rule: this.board.jrecord.getRootNode().info.komi === '6.5' ? 'japanese' : 'chinese'
             }
         });
         if (/Jigo/.test(result)) {
@@ -190,7 +214,7 @@ class PlayController {
 
 async function main() {
     const board = await new Promise(function(res, rej) {
-        new BoardController(BSIZE, 0, res);
+        new BoardController(BSIZE, 0, 7, res);
     });
     // JGOのレンダリングを完了させるためにsetTimeoutでイベントループを進める
     setTimeout(async function() {
@@ -228,7 +252,13 @@ async function main() {
             await engine.timeSettings(3 * 60 + 55, 1); // 9路盤は平均手数が110手らしいので、55のフィッシャー秒を追加
             break;
         }
-        board.setOwnColor(condition.color === 'W' ? JGO.WHITE : JGO.BLACK);
+        if (condition.color === 'W') {
+            board.setOwnColor(JGO.WHITE);
+            board.setKomi(5.5);
+        } else {
+            board.setOwnColor(JGO.BLACK);
+            board.setKomi(6.5);
+        }
         const controller = new PlayController(engine, board, condition.timeRule === 'igo-quest');
         const isSelfPlay = condition.color === 'self-play';
         if (!isSelfPlay) {
@@ -240,7 +270,7 @@ async function main() {
             controller.pass();
         });
         $('#resign').on('click', async function(event) {
-            board.clearTimer();
+            controller.clearTimer();
             await engine.stopPonder();
             speak('ありがとうございました', 'ja-jp', 'female');
             $(document.body).addClass('end');
