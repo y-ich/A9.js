@@ -187,7 +187,7 @@ class PlayController {
 
     async finalScore() {
         const result = await $.post({
-            url: 'http://35.203.161.100/gnugo',
+            url: 'https://mimiaka-python.herokuapp.com/gnugo', // httpでは通信できなかった。 'http://35.203.161.100/gnugo',
             data: {
                 sgf: this.board.jrecord.toSgf(),
                 move: 'est',
