@@ -219,6 +219,8 @@ async function main() {
     });
     // JGOのレンダリングを完了させるためにsetTimeoutでイベントループを進める
     setTimeout(async function() {
+        const $loadingModal = $('#loading-modal');;
+        $loadingModal.modal('show');
         try {
             await engine.loadNN();
         } catch(e) {
@@ -232,6 +234,8 @@ async function main() {
                 console.error(e);
             }
             return;
+        } finally {
+            $loadingModal.modal('hide');            
         }
         const condition = await new Promise(function(res, rej) {
             const $startModal = $('#start-modal');

@@ -1,4 +1,4 @@
-/* global WebDNN */
+/* global WebDNN $ */
 import { LEELA_ZERO } from './constants.js';
 import { BSIZE, BVCNT, FEATURE_CNT } from './constants.js';
 import { softmax, printProb } from './utils.js';
@@ -15,6 +15,12 @@ if (!ArrayBuffer.prototype.slice) {
     };
 }
 
+function setLoadingBar(percentage) {
+    const $loadingBar = $('#loading-bar');
+    $loadingBar.attr('aria-valuenow', percentage);
+    $loadingBar.css('width', percentage.toString() + '%');
+}
+
 export class NeuralNetwork {
     constructor() {
         this.nn = null;
@@ -24,10 +30,14 @@ export class NeuralNetwork {
         if (this.nn) {
             return;
         }
-        this.nn = await WebDNN.load(
-            LEELA_ZERO ? './output_leela' : './output',
-            { backendOrder: ['webgpu', 'webgl'] }
-        );
+        const options = {
+            backendOrder: ['webgpu', 'webgl'],
+            progressCallback: function(loaded, total) {
+                setLoadingBar(loaded / total * 100);
+            }
+        };
+        setLoadingBar(0);
+        this.nn = await WebDNN.load(LEELA_ZERO ? './output_leela' : './output', options);
     }
 
     async evaluate(...inputs) {
