@@ -218,9 +218,9 @@ async function main() {
         new BoardController(BSIZE, 0, 7, res);
     });
     // JGOのレンダリングを完了させるためにsetTimeoutでイベントループを進める
+    const $startModal = $('#start-modal');
+    $startModal.modal('show');
     setTimeout(async function() {
-        const $startModal = $('#start-modal');
-        $startModal.modal('show');
         try {
             await engine.loadNN();
             $('#loading-message').text('ダウンロード完了！対局できます');
