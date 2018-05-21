@@ -219,10 +219,12 @@ async function main() {
     });
     // JGOのレンダリングを完了させるためにsetTimeoutでイベントループを進める
     setTimeout(async function() {
-        const $loadingModal = $('#loading-modal');;
-        $loadingModal.modal('show');
+        const $startModal = $('#start-modal');
+        $startModal.modal('show');
         try {
             await engine.loadNN();
+            $('#loading-message').text('ダウンロード完了！対局できます');
+            $('#start-game').prop('disabled', false);
         } catch(e) {
             if (e.message === 'No backend is available') {
                 if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
@@ -234,12 +236,8 @@ async function main() {
                 console.error(e);
             }
             return;
-        } finally {
-            $loadingModal.modal('hide');            
         }
         const condition = await new Promise(function(res, rej) {
-            const $startModal = $('#start-modal');
-            $startModal.modal('show');
             $startModal.one('hidden.bs.modal', function(e) {
                 const $conditionForm = $('#condition-form');
                 res({
