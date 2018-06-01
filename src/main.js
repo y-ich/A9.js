@@ -1,9 +1,13 @@
-/* global $ JGO BoardController */
+/* global $ JGO BoardController i18n */
 import { WorkerRMI, resigterWorkerRMI } from 'worker-rmi';
 import { NeuralNetwork } from './neural_network.js';
 import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';
 import { speak } from './speech.js';
+
+function i18nSpeak(message) {
+    return speak(message, i18n.lang, 'female');
+}
 
 class A9Engine extends WorkerRMI {
     async loadNN() {
@@ -81,7 +85,7 @@ class PlayController {
                 if (this.timeLeft[this.board.turn] < 0) {
                     clearInterval(this.timer);
                     this.timer = null;
-                    alert('時間切れです');
+                    alert(i18n.timeout);
                 }
             }, 100);
         } else {
@@ -122,21 +126,36 @@ class PlayController {
                 const score = await this.finalScore();
                 let message;
                 if (score === 0) {
-                    message = '持碁';
+                    message = i18n.jigo;
                 } else {
-                    message = score > 0 ? '黒' : '白';
-                    const absScore = Math.abs(score);
-                    message += absScore < 1 ? '半目勝ち' : Math.floor(absScore) + '目半勝ち';
+                    message = i18n[score > 0 ? 'black' : 'white'];
+                    switch (i18n.lang) {
+                        case 'en':
+                        message += ` won by ${score} points`;
+                        break;
+                        case 'ja': {
+                            const absScore = Math.abs(score);
+                            message += absScore < 1 ? '半目勝ち' : Math.floor(absScore) + '目半勝ち';
+                        }
+                        break;
+                    }
                 }
-                message += 'ですか？';
-                speak(message.replace('半', 'はん'));
+                switch (i18n.lang) {
+                    case 'en':
+                    message += '?';
+                    break;
+                    case 'ja':
+                    message += 'ですか？';
+                    break;
+                }
+                i18nSpeak(message.replace('半', 'はん'));
                 setTimeout(function() {
                     alert(message);
                     $(document.body).addClass('end');
                 }, 3000);
             } catch (e) {
                 console.log(e);
-                speak('すみません、整地できませんでした');
+                i18nSpeak(i18n.failScoring);
             }
             return;
         }
@@ -158,12 +177,12 @@ class PlayController {
                 switch (move) {
                     case 'resign':
                     this.clearTimer();
-                    speak('負けました', 'ja-jp', 'female');
+                    i18nSpeak(i18n.resign);
                     $(document.body).addClass('end');
                     break;
                     case 'pass':
                     this.board.play(null);
-                    speak('パスします', 'ja-jp', 'female');
+                    i18nSpeak(i18n.pass);
                     break;
                     default: {
                         const ev = str2ev(move);
@@ -223,14 +242,14 @@ async function main() {
     setTimeout(async function() {
         try {
             await engine.loadNN();
-            $('#loading-message').text('ダウンロード完了！対局できます');
+            $('#loading-message').text(i18n.finishDownload);
             $('#start-game').prop('disabled', false);
         } catch(e) {
             if (e.message === 'No backend is available') {
                 if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                    speak('残念ながらお使いのブラウザでは動きません。Safariをお使いですね。「開発」メニューの「実験的な機能」で「WebGPU」を有効にすると動くかもしれません', 'ja-jp', 'female');
-                } else if (!speak('残念ながらお使いのブラウザでは動きません', 'ja-jp', 'female')) {
-                    alert('残念ながらお使いのブラウザでは動きません');
+                    i18nSpeak(i18n.notSupport + i18n.safariWithoutWebgpu);
+                } else if (!i18nSpeak(i18n.notSupport)) {
+                    alert(i18n.notSupport);
                 }
             } else {
                 console.error(e);
@@ -265,7 +284,7 @@ async function main() {
         const controller = new PlayController(engine, board, condition.timeRule === 'igo-quest');
         const isSelfPlay = condition.color === 'self-play';
         if (!isSelfPlay) {
-            speak('お願いします', 'ja-jp', 'female');
+            i18nSpeak(i18n.startGreet);
         }
         controller.setIsSelfPlay(isSelfPlay);
         board.addObserver(controller);
@@ -275,7 +294,7 @@ async function main() {
         $('#resign').on('click', async function(event) {
             controller.clearTimer();
             await engine.stopPonder();
-            speak('ありがとうございました', 'ja-jp', 'female');
+            i18nSpeak(i18n.endGreet);
             $(document.body).addClass('end');
         });
         $('#retry').one('click', async function(event) {
