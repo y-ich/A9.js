@@ -11,5 +11,6 @@ window.i18n = {
     safariWithoutWebgpu: 'You use Safari, it may work if you enable WebGPU of "Experimental Features" in "Develop" menu.',
     notSupport: 'Sorry, this app does not work on your browser. ',
     startGreet: "Let's play!",
-    endGreet: 'Thank you'
+    endGreet: 'Thank you',
+    scoring: 'Let me count the score.'
 }

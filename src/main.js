@@ -122,6 +122,7 @@ class PlayController {
     async update(coord) {
         if (coord === 'end') {
             this.clearTimer();
+            i18nSpeak(i18n.scoring);
             try {
                 const score = await this.finalScore();
                 let message;

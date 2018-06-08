@@ -11,5 +11,6 @@ window.i18n = {
     safariWithoutWebgpu: 'Safariをお使いですね。「開発」メニューの「実験的な機能」で「WebGPU」を有効にすると動くかもしれません',
     notSupport: '残念ながらお使いのブラウザでは動きません',
     startGreet: 'お願いします',
-    endGreet: 'ありがとうございました'
+    endGreet: 'ありがとうございました',
+    scoring: '整地してみましょう'
 }
