@@ -69,7 +69,7 @@ class PlayController {
         if (igoQuest) {
             this.timeLeft = [
                 0, // dumy
-                (3 * 60 + 1) * 1000, // black
+                3 * 60 * 1000, // black
                 3 * 60 * 1000, // white
             ];
             this.start = Date.now();
@@ -77,11 +77,8 @@ class PlayController {
                 const start = Date.now();
                 this.timeLeft[this.board.turn] -= start - this.start;
                 this.start = start;
-                if (this.board.turn == this.board.ownColor) {
-                    $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
-                } else {
-                    $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
-                }
+                $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
+                $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
                 if (this.timeLeft[this.board.turn] < 0) {
                     clearInterval(this.timer);
                     this.timer = null;
@@ -162,7 +159,7 @@ class PlayController {
         }
 
         if (this.igoQuest) {
-            this.timeLeft[this.board.turn] += 1000;
+            this.timeLeft[this.board.turn % 2 + 1] += 1000;
         } else if (this.board.turn === this.board.ownColor) {
             this.timeLeft[this.board.ownColor % 2 + 1] = this.engine.byoyomi * 1000;
             $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
