@@ -5,6 +5,9 @@ import { ev2str, str2ev, xy2ev, ev2xy } from './coord_convert.js';
 import { BSIZE, PASS } from './constants.js';
 import { speak } from './speech.js';
 
+const FIRST_TIME = 3 * 60;
+const FISHER_SEC = 1;
+
 function i18nSpeak(message) {
     return speak(message, i18n.lang, 'female');
 }
@@ -69,8 +72,8 @@ class PlayController {
         if (igoQuest) {
             this.timeLeft = [
                 0, // dumy
-                3 * 60 * 1000, // black
-                3 * 60 * 1000, // white
+                FIRST_TIME * 1000, // black
+                FIRST_TIME * 1000, // white
             ];
             this.start = Date.now();
             this.timer = setInterval(() => {
@@ -82,6 +85,7 @@ class PlayController {
                 if (this.timeLeft[this.board.turn] < 0) {
                     clearInterval(this.timer);
                     this.timer = null;
+                    this.engine.stopPonder();
                     alert(i18n.timeout);
                 }
             }, 100);
@@ -159,7 +163,7 @@ class PlayController {
         }
 
         if (this.igoQuest) {
-            this.timeLeft[this.board.turn % 2 + 1] += 1000;
+            this.timeLeft[this.board.turn % 2 + 1] += FIRST_SEC * 1000;
         } else if (this.board.turn === this.board.ownColor) {
             this.timeLeft[this.board.ownColor % 2 + 1] = this.engine.byoyomi * 1000;
             $('#ai-time').text(Math.ceil(this.timeLeft[this.board.ownColor % 2 + 1] / 1000));
@@ -172,6 +176,9 @@ class PlayController {
         if (this.isSelfPlay || this.board.turn !== this.board.ownColor) {
             setTimeout(async () => {
                 const move = await this.engine.genmove();
+                if (!this.timer) {
+                    return; // 時間切れ
+                }
                 switch (move) {
                     case 'resign':
                     this.clearTimer();
@@ -269,13 +276,13 @@ async function main() {
             await engine.timeSettings(0, condition.time);
             break;
             case 'igo-quest':
-            await engine.timeSettings(3 * 60 + 55, 1); // 9路盤は平均手数が110手らしいので、55のフィッシャー秒を追加
+            await engine.timeSettings(3 * 60, 1);
             break;
         }
         if (condition.color === 'W') {
             board.setOwnColor(JGO.WHITE);
             board.setKomi(5.5);
-        } else {
+        } else if (condition.color === 'B') {
             board.setOwnColor(JGO.BLACK);
             board.setKomi(6.5);
         }
