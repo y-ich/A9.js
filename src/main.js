@@ -250,7 +250,7 @@ async function main() {
             $('#loading-message').text(i18n.finishDownload);
             $('#start-game').prop('disabled', false);
         } catch(e) {
-            if (e.message === 'No backend is available') {
+            if (e === 'Error: No backend is available') {
                 if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
                     i18nSpeak(i18n.notSupport + i18n.safariWithoutWebgpu);
                 } else if (!i18nSpeak(i18n.notSupport)) {
