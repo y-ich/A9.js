@@ -239,14 +239,12 @@ export class Tree {
     }
 
     async keepPlayout(b, exitCondition) {
-        let searchIdx = 1;
         this.evalCnt = 0;
         let bCpy = new Board();
         while (true) {
             b.copyTo(bCpy);
             await this.searchBranch(bCpy, this.rootId, []);
-            searchIdx += 1;
-            if (searchIdx % 64 === 0 && exitCondition(searchIdx)) {
+            if (exitCondition()) {
                 break;
             }
         }
