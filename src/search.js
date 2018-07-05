@@ -282,7 +282,7 @@ export class Tree {
 
         this.deleteNode();
 
-        const time_ = (time === 0.0 ? this.getSearchTime() : time) * 1000;
+        const time_ = (time === 0.0 ? this.getSearchTime() : time) * 1000 - 500; // 0.5秒がマージン
         if (ponder) {
             self.PONDER_STOP = false;
         }

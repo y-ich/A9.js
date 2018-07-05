@@ -208,6 +208,9 @@ class PlayController {
                         this.board.play(new JGO.Coordinate(xy[0] - 1, BSIZE - xy[1]), true);
                     }
                 }
+                if (this.igoQuest) {
+                    await this.engine.timeSettings(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000, FISHER_SEC);
+                }
             }, 0);
         } else {
             this.engine.startPonder();
