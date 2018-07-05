@@ -60,6 +60,10 @@ class A9Engine {
     stopPonder() {
         self.PONDER_STOP = true;
     }
+
+    timeLeft() {
+        return this.tree.leftTime;
+    }
 }
 
 resigterWorkerRMI(self, A9Engine);

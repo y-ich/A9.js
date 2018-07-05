@@ -195,3 +195,11 @@ JGO.getView = function(sgf) {
     };
 };
 */
+
+JGO.opponentOf = function(color) {
+    switch (color) {
+        case JGO.BLACK: return JGO.WHITE;
+        case JGO.WHITE: return JGO.BLACK;
+        default: throw new Error('illegal argument');
+    }
+}
