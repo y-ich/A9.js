@@ -331,5 +331,5 @@ async function main() {
 
 const worker = new Worker('js/worker.js');
 resigterWorkerRMI(worker, NeuralNetwork);
-const engine = new A9Engine(worker);
+const engine = new A9Engine(worker); // TODO コミの指定をしていない。(Board#score以外コミは使わない)
 main();
