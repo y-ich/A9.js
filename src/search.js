@@ -128,7 +128,7 @@ export class Tree {
     }
 
     getSearchTime() {
-        if (this.mainTime === 0.0 || this.leftTime < self.byoyomi * 2.0) {
+        if (this.mainTime === 0.0 || this.leftTime < this.byoyomi * 2.0) {
             return Math.max(this.byoyomi, 1.0);
         } else {
             return this.leftTime / (55.0 + Math.max(50 - this.rootMoveCnt, 0));
