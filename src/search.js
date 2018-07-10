@@ -63,11 +63,12 @@ export class Tree {
     createNode(b, prob) {
         const candidates = b.candidates();
         const hs = candidates.hash;
-        if (this.nodeHashs.has(hs) &&
-            this.node[this.nodeHashs[hs]].hash === hs &&
-            this.node[this.nodeHashs[hs]].moveCnt === candidates.moveCnt) {
-                return this.nodeHashs[hs];
-
+        if (this.nodeHashs.has(hs)) {
+            const nodeId = this.nodeHashs.get(hs);
+            if (this.node[nodeId].hash === hs &&
+            this.node[nodeId].moveCnt === candidates.moveCnt) {
+                return nodeId;
+            }
         }
 
         let nodeId = hs % MAX_NODE_CNT;
@@ -76,7 +77,7 @@ export class Tree {
             nodeId = nodeId + 1 < MAX_NODE_CNT ? nodeId + 1 : 0;
         }
 
-        this.nodeHashs[hs] = nodeId;
+        this.nodeHashs.set(hs, nodeId);
         this.nodeCnt += 1;
 
         const nd = this.node[nodeId];
